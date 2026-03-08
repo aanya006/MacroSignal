@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Intelligence Dashboard — Final Design Direction</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f1f5f9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  .header { height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+  .logo { font-size: 18px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.3px; }
+  .logo span { color: #3b82f6; }
+  .tabs { display: flex; gap: 2px; background: #1e293b; border-radius: 8px; padding: 3px; }
+  .tab { padding: 6px 16px; border-radius: 6px; font-size: 13px; color: #94a3b8; cursor: pointer; border: none; background: none; font-family: inherit; transition: all 0.15s; }
+  .tab.active { background: #334155; color: #f1f5f9; }
+  .tab:hover:not(.active) { color: #e2e8f0; }
+  .status { font-size: 12px; color: #22c55e; display: flex; align-items: center; gap: 6px; }
+  .status-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* Main Layout */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Feed Panel */
+  .feed { width: 320px; border-right: 1px solid #1e293b; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; background: #0c1322; }
+  .feed::-webkit-scrollbar { width: 4px; }
+  .feed::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+  .feed-card { background: #1e293b; border-radius: 6px; padding: 12px 14px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .feed-card:hover { background: #253348; border-color: #334155; }
+  .feed-card.selected { border-color: #ef4444; background: #1a1525; }
+  .feed-card-row { display: flex; justify-content: space-between; align-items: center; }
+  .feed-card-title { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .feed-card-meta { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+  /* Badges */
+  .badge { padding: 2px 8px; border-radius: 50px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-hot { background: rgba(239, 68, 68, 0.15); color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.15); }
+  .badge-warming { background: rgba(245, 158, 11, 0.15); color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.15); }
+  .badge-cool { background: rgba(6, 182, 212, 0.15); color: #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.15); }
+  .badge-lg { padding: 4px 12px; font-size: 11px; }
+
+  /* Detail Panel */
+  .detail { flex: 1; overflow-y: auto; background: #0f172a; }
+  .detail::-webkit-scrollbar { width: 6px; }
+  .detail::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+  /* Theme Banner */
+  .theme-banner { position: relative; height: 180px; overflow: hidden; }
+  .theme-banner-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a2744 0%, #2d1f3d 50%, #1a2744 100%); }
+  .theme-banner-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(15, 23, 42, 0.85) 70%, rgba(15, 23, 42, 1) 100%); }
+  .theme-banner-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 28px; }
+  .theme-banner-title { font-size: 26px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 12px; }
+
+  /* Tags */
+  .tags-row { display: flex; gap: 8px; padding: 12px 28px; border-bottom: 1px solid #1e293b; }
+  .tag { padding: 4px 10px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; font-weight: 500; }
+
+  /* Two Column Content */
+  .detail-columns { display: flex; gap: 24px; padding: 24px 28px; }
+  .detail-col-left { flex: 1; min-width: 0; }
+  .detail-col-right { width: 380px; flex-shrink: 0; }
+
+  /* Section Headers */
+  .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: #64748b; margin-bottom: 14px; }
+
+  /* Articles */
+  .hero-article { border-radius: 8px; overflow: hidden; margin-bottom: 16px; background: #1e293b; cursor: pointer; transition: background 0.15s; }
+  .hero-article:hover { background: #253348; }
+  .hero-article-img { width: 100%; height: 180px; background: linear-gradient(135deg, #253348, #1a2744, #2d2040); display: flex; align-items: center; justify-content: center; }
+  .hero-article-img-placeholder { font-size: 13px; color: #475569; text-align: center; }
+  .hero-article-content { padding: 14px 16px; }
+  .hero-article-title { font-size: 16px; font-weight: 600; color: #f1f5f9; line-height: 1.4; margin-bottom: 6px; }
+  .hero-article-meta { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+  .hero-article-summary { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+
+  .article-card { display: flex; gap: 12px; padding: 12px; background: #1e293b; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s; }
+  .article-card:hover { background: #253348; }
+  .article-thumb { width: 64px; height: 48px; background: #334155; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #64748b; font-weight: 600; }
+  .article-content { flex: 1; min-width: 0; }
+  .article-title { font-size: 13px; font-weight: 500; color: #e2e8f0; line-height: 1.3; margin-bottom: 3px; }
+  .article-meta { font-size: 11px; color: #64748b; }
+  .article-summary { font-size: 12px; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+
+  /* Causal Chain */
+  .causal-chain { display: flex; flex-direction: column; margin-bottom: 8px; }
+  .causal-step { background: #1e293b; border-radius: 8px; padding: 14px 16px; border-left: 3px solid; }
+  .causal-step-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .causal-step-text { font-size: 13px; color: #e2e8f0; line-height: 1.5; }
+  .causal-step.trigger { border-left-color: #ef4444; }
+  .causal-step.trigger .causal-step-label { color: #ef4444; }
+  .causal-step.mechanism { border-left-color: #f59e0b; }
+  .causal-step.mechanism .causal-step-label { color: #f59e0b; }
+  .causal-step.impact { border-left-color: #ef4444; }
+  .causal-step.impact .causal-step-label { color: #ef4444; }
+
+  .causal-connector { display: flex; justify-content: center; padding: 6px 0; }
+  .causal-arrow { width: 3px; height: 28px; background: linear-gradient(to bottom, #f59e0b, #ef4444); position: relative; margin: 0 auto; border-radius: 2px; box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+  .causal-arrow::after { content: ''; position: absolute; bottom: -6px; left: -5.5px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid #ef4444; filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); }
+
+  .ai-disclaimer { font-size: 11px; color: #64748b; margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+  .ai-badge { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+
+  /* Regions & Markets */
+  .regions-box { background: #1e293b; border-radius: 8px; padding: 14px 16px; border: 1px solid #334155; margin-bottom: 16px; }
+  .regions-box-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 10px; }
+  .regions-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .region-chip { padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+  .market-chip { padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+
+  /* Historical Parallel */
+  .historical-parallel { margin-top: 24px; padding-top: 20px; border-top: 1px dashed #334155; }
+  .historical-parallel-header { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: #8b5cf6; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .historical-parallel-icon { width: 18px; height: 18px; border-radius: 4px; background: rgba(139, 92, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #8b5cf6; }
+  .reading-suggestion { background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(59, 130, 246, 0.05)); border-radius: 8px; padding: 14px 16px; border: 1px solid rgba(139, 92, 246, 0.2); border-left: 3px solid #8b5cf6; }
+  .reading-suggestion-label { font-size: 12px; color: #c4b5fd; font-weight: 600; margin-bottom: 6px; }
+  .reading-suggestion-text { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .reading-suggestion-link { color: #8b5cf6; font-size: 11px; margin-top: 8px; display: inline-block; text-decoration: none; }
+  .reading-suggestion-link:hover { text-decoration: underline; }
+
+  /* Date Timeline */
+  .date-timeline-section { margin-top: 0; margin-bottom: 16px; }
+  .date-timeline { background: #1e293b; border-radius: 8px; padding: 14px 16px; position: relative; }
+  .date-timeline-track { display: flex; align-items: center; gap: 0; position: relative; overflow-x: auto; padding: 8px 0; }
+  .date-timeline-track::-webkit-scrollbar { height: 3px; }
+  .date-timeline-track::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+  /* Date nodes — epicenter heat system */
+  .date-node { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; position: relative; z-index: 1; flex-shrink: 0; transition: all 0.15s; }
+  .date-node:hover .date-dot { transform: scale(1.15); }
+
+  /* Base dot — uniform size, color and glow driven by heat level */
+  .date-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.2s; }
+
+  /* Heat levels: only color and glow change, size stays the same */
+  .date-dot.heat-cold { background: #475569; }
+  .date-dot.heat-low { background: #92400e; box-shadow: 0 0 4px rgba(239, 68, 68, 0.15); }
+  .date-dot.heat-medium { background: #dc2626; box-shadow: 0 0 6px rgba(239, 68, 68, 0.3); }
+  .date-dot.heat-high { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), 0 0 20px rgba(239, 68, 68, 0.15); }
+  .date-dot.heat-critical { background: #ef4444; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5), 0 0 24px rgba(239, 68, 68, 0.2); animation: epicenter-pulse 2.5s ease-in-out infinite; }
+
+  @keyframes epicenter-pulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.5), 0 0 24px rgba(239, 68, 68, 0.2); }
+    50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.6), 0 0 32px rgba(239, 68, 68, 0.3); }
+  }
+
+  /* Selected state — white ring */
+  .date-node.selected .date-dot { outline: 2px solid #f1f5f9; outline-offset: 2px; }
+
+  /* Labels — always visible, bold on critical dates */
+  .date-node .date-label { font-size: 10px; color: #64748b; white-space: nowrap; transition: all 0.15s; }
+  .date-node.hot-label .date-label { color: #ef4444; font-weight: 700; }
+  .date-node.selected .date-label { color: #f1f5f9; font-weight: 700; }
+  .date-node:hover .date-label { color: #94a3b8; }
+
+  /* Connectors — hot connectors glow between critical dates */
+  .date-connector { width: 16px; height: 2px; background: #334155; flex-shrink: 0; transition: all 0.2s; }
+  .date-connector.hot-range { height: 2px; background: rgba(239, 68, 68, 0.4); box-shadow: 0 0 6px rgba(239, 68, 68, 0.2); border-radius: 2px; }
+
+  /* Article scroll animation */
+  .article-list-animated { transition: transform 0.2s ease-out, opacity 0.15s ease-out; }
+  .article-list-animated.scrolling-up { transform: translateY(-20px); opacity: 0.3; }
+  .article-list-animated.scrolling-down { transform: translateY(20px); opacity: 0.3; }
+
+  /* Asset Impact Grid */
+  .asset-impacts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .asset-impact-card { background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; }
+  .asset-impact-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .asset-impact-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; }
+  .asset-impact-direction { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 3px; }
+  .asset-impact-direction.bullish { color: #22c55e; }
+  .asset-impact-direction.bearish { color: #ef4444; }
+  .asset-impact-direction.neutral { color: #64748b; }
+  .asset-impact-text { font-size: 12px; color: #cbd5e1; line-height: 1.4; }
+
+  /* Footer */
+  .footer { height: 32px; background: #0c1322; border-top: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 11px; color: #475569; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo"><span>MACRO</span> Intelligence</div>
+  <div class="tabs">
+    <button class="tab active">Live Themes</button>
+    <button class="tab">Memory Search</button>
+  </div>
+  <div class="status">
+    <span class="status-dot"></span>
+    Live · Updated 2 min ago
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Feed Panel (Compact Dense) -->
+  <div class="feed">
+    <div class="feed-card selected">
+      <div class="feed-card-row">
+        <span class="feed-card-title">MAS Monetary Policy</span>
+        <span class="badge badge-hot">Hot</span>
+      </div>
+      <div class="feed-card-meta">9 articles · 2h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">Fed Policy Trajectory</span>
+        <span class="badge badge-hot">Hot</span>
+      </div>
+      <div class="feed-card-meta">12 articles · 3h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">China Manufacturing PMI</span>
+        <span class="badge badge-warming">Warming</span>
+      </div>
+      <div class="feed-card-meta">8 articles · 5h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">ASEAN Trade Dynamics</span>
+        <span class="badge badge-warming">Warming</span>
+      </div>
+      <div class="feed-card-meta">5 articles · 6h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">Commodity Price Shifts</span>
+        <span class="badge badge-warming">Warming</span>
+      </div>
+      <div class="feed-card-meta">4 articles · 7h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">Global Oil Markets</span>
+        <span class="badge badge-cool">Cool</span>
+      </div>
+      <div class="feed-card-meta">3 articles · 8h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">Japan Yield Curve</span>
+        <span class="badge badge-cool">Cool</span>
+      </div>
+      <div class="feed-card-meta">2 articles · 12h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">EU Energy Transition</span>
+        <span class="badge badge-cool">Cool</span>
+      </div>
+      <div class="feed-card-meta">2 articles · 14h ago</div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-card-row">
+        <span class="feed-card-title">India Rate Decision</span>
+        <span class="badge badge-cool">Cool</span>
+      </div>
+      <div class="feed-card-meta">1 article · 18h ago</div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail">
+
+    <!-- Theme Banner with Image -->
+    <div class="theme-banner">
+      <div class="theme-banner-bg"></div>
+      <div class="theme-banner-overlay"></div>
+      <div class="theme-banner-content">
+        <div class="theme-banner-title">
+          MAS Monetary Policy
+          <span class="badge badge-hot badge-lg">Hot</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tags Row -->
+    <div class="tags-row">
+      <span class="tag">Singapore</span>
+      <span class="tag">Asia</span>
+      <span class="tag">FX</span>
+      <span class="tag">Equities</span>
+      <span class="tag">Bonds</span>
+    </div>
+
+    <!-- Two Column Content -->
+    <div class="detail-columns">
+
+      <!-- Left Column: Date Timeline + Articles -->
+      <div class="detail-col-left">
+        <!-- Interactive Date Timeline -->
+        <div class="date-timeline-section">
+          <div class="section-title">Timeline : Last 30 Days</div>
+          <div class="date-timeline">
+            <div class="date-timeline-track">
+              <div class="date-node hot-label selected" onclick="selectDate(this)" data-date="Mar 8" data-count="5">
+                <div class="date-label">Mar 8</div>
+                <div class="date-dot heat-critical"></div>
+              </div>
+              <div class="date-connector hot-range"></div>
+              <div class="date-node hot-label" onclick="selectDate(this)" data-date="Mar 7" data-count="7">
+                <div class="date-label">Mar 7</div>
+                <div class="date-dot heat-critical"></div>
+              </div>
+              <div class="date-connector hot-range"></div>
+              <div class="date-node hot-label" onclick="selectDate(this)" data-date="Mar 6" data-count="5">
+                <div class="date-label">Mar 6</div>
+                <div class="date-dot heat-high"></div>
+              </div>
+              <div class="date-connector hot-range"></div>
+              <div class="date-node hot-label" onclick="selectDate(this)" data-date="Mar 5" data-count="4">
+                <div class="date-label">Mar 5</div>
+                <div class="date-dot heat-high"></div>
+              </div>
+              <div class="date-connector"></div>
+              <div class="date-node" onclick="selectDate(this)" data-date="Mar 4" data-count="2">
+                <div class="date-label">Mar 4</div>
+                <div class="date-dot heat-low"></div>
+              </div>
+              <div class="date-connector"></div>
+              <div class="date-node" onclick="selectDate(this)" data-date="Mar 3" data-count="3">
+                <div class="date-label">Mar 3</div>
+                <div class="date-dot heat-medium"></div>
+              </div>
+              <div class="date-connector"></div>
+              <div class="date-node" onclick="selectDate(this)" data-date="Mar 1" data-count="2">
+                <div class="date-label">Mar 1</div>
+                <div class="date-dot heat-low"></div>
+              </div>
+              <div class="date-connector"></div>
+              <div class="date-node" onclick="selectDate(this)" data-date="Feb 27" data-count="1">
+                <div class="date-label">Feb 27</div>
+                <div class="date-dot heat-cold"></div>
+              </div>
+              <div class="date-connector"></div>
+              <div class="date-node" onclick="selectDate(this)" data-date="Feb 25" data-count="1">
+                <div class="date-label">Feb 25</div>
+                <div class="date-dot heat-cold"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">Articles — Mar 8 (5)</div>
+
+        <div class="article-list-animated" id="articleList">
+        <!-- Hero Article -->
+        <div class="hero-article">
+          <div class="hero-article-img">
+            <div class="hero-article-img-placeholder">
+              Article hero image<br>(Open Graph image from source)
+            </div>
+          </div>
+          <div class="hero-article-content">
+            <div class="hero-article-title">MAS maintains tight SGD policy band amid global uncertainty</div>
+            <div class="hero-article-meta">Channel News Asia · 2 hours ago</div>
+            <div class="hero-article-summary">MAS keeps SGD NEER band slope and width unchanged, signaling continued tightening stance despite global slowdown concerns and regional central bank easing.</div>
+          </div>
+        </div>
+
+        <!-- Article List -->
+        <div class="article-card">
+          <div class="article-thumb">BT</div>
+          <div class="article-content">
+            <div class="article-title">Singapore exporters brace for stronger SGD impact on margins</div>
+            <div class="article-meta">Business Times · 4h ago</div>
+            <div class="article-summary">Export-oriented firms report margin pressure as SGD strengthens against MYR and IDR.</div>
+          </div>
+        </div>
+
+        <div class="article-card">
+          <div class="article-thumb">R</div>
+          <div class="article-content">
+            <div class="article-title">Analysis: MAS policy divergence from regional central banks widens</div>
+            <div class="article-meta">Reuters · 5h ago</div>
+            <div class="article-summary">While Bank Negara and BI signal easing, MAS continues tight stance creating widening policy gap.</div>
+          </div>
+        </div>
+
+        <div class="article-card">
+          <div class="article-thumb">MAS</div>
+          <div class="article-content">
+            <div class="article-title">MAS Monetary Policy Statement — March 2026</div>
+            <div class="article-meta">Monetary Authority of Singapore · 6h ago</div>
+            <div class="article-summary">Official statement: MAS maintains current rate of appreciation of the SGD NEER policy band.</div>
+          </div>
+        </div>
+
+        <div class="article-card">
+          <div class="article-thumb">ST</div>
+          <div class="article-content">
+            <div class="article-title">SGD hits 3-month high against regional currencies after MAS decision</div>
+            <div class="article-meta">Straits Times · 7h ago</div>
+            <div class="article-summary">Singapore dollar strengthens to 3-month high against Malaysian ringgit and Indonesian rupiah.</div>
+          </div>
+        </div>
+
+        <div class="article-card">
+          <div class="article-thumb">BBG</div>
+          <div class="article-content">
+            <div class="article-title">Singapore's tight monetary stance may weigh on export growth</div>
+            <div class="article-meta">Bloomberg · 8h ago</div>
+            <div class="article-summary">Economists warn MAS policy could dampen export competitiveness in key ASEAN markets.</div>
+          </div>
+        </div>
+        </div><!-- /article-list-animated -->
+      </div>
+
+      <!-- Right Column: Causal Chain + Reading Suggestions -->
+      <div class="detail-col-right">
+        <!-- Regions & Markets Affected -->
+        <div class="regions-box">
+          <div class="regions-box-label">Regions & Markets Affected</div>
+          <div class="regions-row">
+            <span class="region-chip">Singapore</span>
+            <span class="region-chip">ASEAN</span>
+            <span class="market-chip">SGD / FX</span>
+            <span class="market-chip">STI Industrials</span>
+            <span class="market-chip">SG Bonds</span>
+          </div>
+        </div>
+
+        <div class="section-title">Causal Chain</div>
+
+        <div class="causal-chain">
+          <div class="causal-step trigger">
+            <div class="causal-step-label">Trigger</div>
+            <div class="causal-step-text">MAS reaffirms tight SGD NEER policy band in semi-annual monetary policy review</div>
+          </div>
+          <div class="causal-connector"><div class="causal-arrow"></div></div>
+          <div class="causal-step mechanism">
+            <div class="causal-step-label">Mechanism</div>
+            <div class="causal-step-text">SGD appreciation continues against regional currencies, tightening financial conditions for Singapore-based exporters and widening policy gap with ASEAN central banks</div>
+          </div>
+          <div class="causal-connector"><div class="causal-arrow"></div></div>
+        </div>
+
+        <div class="section-title" style="margin-top: 4px; margin-bottom: 10px;">Asset Impacts</div>
+        <div class="asset-impacts-grid">
+          <div class="asset-impact-card">
+            <div class="asset-impact-header">
+              <span class="asset-impact-name">Equities</span>
+              <span class="asset-impact-direction bearish">&#9660; Bearish</span>
+            </div>
+            <div class="asset-impact-text">Export-heavy STI industrials face earnings pressure from stronger SGD</div>
+          </div>
+          <div class="asset-impact-card">
+            <div class="asset-impact-header">
+              <span class="asset-impact-name">Bonds</span>
+              <span class="asset-impact-direction bullish">&#9650; Bullish</span>
+            </div>
+            <div class="asset-impact-text">SGD strength supports SGS bond demand from foreign holders</div>
+          </div>
+          <div class="asset-impact-card">
+            <div class="asset-impact-header">
+              <span class="asset-impact-name">FX</span>
+              <span class="asset-impact-direction bullish">&#9650; SGD Strengthening</span>
+            </div>
+            <div class="asset-impact-text">NEER band tightening drives continued SGD appreciation vs MYR, IDR</div>
+          </div>
+          <div class="asset-impact-card">
+            <div class="asset-impact-header">
+              <span class="asset-impact-name">Commodities</span>
+              <span class="asset-impact-direction neutral">&#8212; Neutral</span>
+            </div>
+            <div class="asset-impact-text">Limited direct impact on commodity positioning from MAS policy</div>
+          </div>
+        </div>
+
+        <div class="ai-disclaimer">
+          <span class="ai-badge">AI-Generated</span>
+          For informational purposes only — not financial advice.
+        </div>
+
+        <!-- Historical Parallel (visually distinct section) -->
+        <div class="historical-parallel">
+          <div class="historical-parallel-header">
+            <div class="historical-parallel-icon">H</div>
+            Historical Parallel
+          </div>
+        <div class="reading-suggestion">
+          <div class="reading-suggestion-label">MAS Tightening Cycle — Q3 2024</div>
+          <div class="reading-suggestion-text">Similar pattern detected: MAS tightening cycle Q3 2024 — SGD appreciated 2.1% against USD over 6 weeks. STI industrials declined 4.3% in the same period. ASEAN FX weakened 1.5-3% against SGD.</div>
+          <a class="reading-suggestion-link" href="#">View in Memory Search</a>
+        </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>Macro Intelligence Dashboard — FinTech Hackathon 2026</span>
+  <span>Data: NewsAPI, GDELT, Google News · AI: Claude</span>
+</div>
+
+<script>
+  // Date Timeline interaction with fast-scroll animation
+  function selectDate(node) {
+    const allNodes = document.querySelectorAll('.date-node');
+    const currentIdx = Array.from(allNodes).findIndex(n => n.classList.contains('selected'));
+    const newIdx = Array.from(allNodes).indexOf(node);
+
+    // Remove previous selection
+    allNodes.forEach(n => n.classList.remove('selected'));
+    node.classList.add('selected');
+
+    // Animate article list with fast-scroll effect
+    // Index order is newest-first (left), so higher index = older date
+    const articleList = document.getElementById('articleList');
+    const direction = newIdx > currentIdx ? 'scrolling-down' : 'scrolling-up';
+
+    articleList.classList.add(direction);
+
+    setTimeout(() => {
+      articleList.classList.remove(direction);
+      // Update article section title with selected date
+      const dateLabel = node.getAttribute('data-date');
+      const count = node.getAttribute('data-count');
+      const sectionTitle = document.querySelector('.detail-col-left .section-title:last-of-type');
+      if (sectionTitle) sectionTitle.textContent = 'Articles \u2014 ' + dateLabel + ' (' + count + ')';
+    }, 200);
+  }
+</script>
+</body>
+</html>
