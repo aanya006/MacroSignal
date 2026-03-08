@@ -234,6 +234,15 @@ def run_ingestion():
         errors.append(f"Clustering: {e}")
         logger.error(f"Clustering error: {e}")
 
+    # Run AI summarization on new articles
+    try:
+        from app.services.summarizer import summarize_unsummarized
+        summarized = summarize_unsummarized(batch_size=20)
+        logger.info(f"Summarized {summarized} articles")
+    except Exception as e:
+        errors.append(f"Summarization: {e}")
+        logger.error(f"Summarization error: {e}")
+
     # Log the run
     status = "success" if not errors else "partial"
     error_msg = "; ".join(errors) if errors else None
