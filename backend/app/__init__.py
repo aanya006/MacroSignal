@@ -7,6 +7,10 @@ def create_app():
     CORS(app, origins=["http://localhost:5173", "http://localhost:5174"])
 
     from app.routes.status import status_bp
+    from app.routes.ingestion import ingestion_bp
+    from app.routes.themes import themes_bp
     app.register_blueprint(status_bp)
+    app.register_blueprint(ingestion_bp)
+    app.register_blueprint(themes_bp)
 
     return app
