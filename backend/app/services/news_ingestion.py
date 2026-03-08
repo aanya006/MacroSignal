@@ -7,6 +7,7 @@ from urllib.parse import quote
 import requests
 
 from app.models.db import execute_query, execute_many
+from app.services.tagging import classify_tags
 from app.utils.config import NEWS_API_KEY
 
 logger = logging.getLogger(__name__)
@@ -147,10 +148,14 @@ def store_articles(articles):
     new_count = 0
     for article in articles:
         try:
+            # Tag with regions and asset classes
+            text = f"{article.get('title', '')} {article.get('full_text', '')}"
+            regions, assets = classify_tags(text)
+
             result = execute_query(
                 """
-                INSERT INTO articles (title, source_name, url, published_at, full_text, ingested_at)
-                VALUES (%s, %s, %s, %s, %s, NOW())
+                INSERT INTO articles (title, source_name, url, published_at, full_text, region_tags, asset_tags, ingested_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                 ON CONFLICT (url) DO NOTHING
                 """,
                 (
@@ -159,6 +164,8 @@ def store_articles(articles):
                     article["url"],
                     article.get("published_at"),
                     article.get("full_text", ""),
+                    regions or None,
+                    assets or None,
                 ),
                 fetch=False,
             )

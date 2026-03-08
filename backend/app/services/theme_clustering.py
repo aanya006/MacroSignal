@@ -268,10 +268,57 @@ def snapshot_themes():
     return saved
 
 
+def aggregate_theme_tags():
+    """Roll up article-level region/asset tags to theme level.
+
+    A theme gets a tag if 2+ of its articles carry that tag.
+    """
+    themes = execute_query("SELECT id FROM themes")
+
+    for theme in themes:
+        try:
+            tag_data = execute_query(
+                """
+                SELECT
+                    unnest(region_tags) as tag, 'region' as kind
+                FROM articles WHERE theme_id = %s AND region_tags IS NOT NULL
+                UNION ALL
+                SELECT
+                    unnest(asset_tags) as tag, 'asset' as kind
+                FROM articles WHERE theme_id = %s AND asset_tags IS NOT NULL
+                """,
+                (theme["id"], theme["id"]),
+            )
+
+            # Count occurrences
+            region_counts = {}
+            asset_counts = {}
+            for row in tag_data:
+                if row["kind"] == "region":
+                    region_counts[row["tag"]] = region_counts.get(row["tag"], 0) + 1
+                else:
+                    asset_counts[row["tag"]] = asset_counts.get(row["tag"], 0) + 1
+
+            # Threshold: 2+ articles for a tag to apply to the theme
+            region_tags = [t for t, c in region_counts.items() if c >= 2] or None
+            asset_tags = [t for t, c in asset_counts.items() if c >= 2] or None
+
+            execute_query(
+                "UPDATE themes SET region_tags = %s, asset_tags = %s WHERE id = %s",
+                (region_tags, asset_tags, theme["id"]),
+                fetch=False,
+            )
+        except Exception as e:
+            logger.error(f"Error aggregating tags for theme {theme['id']}: {e}")
+
+    logger.info("Theme-level tags aggregated from articles")
+
+
 def run_clustering():
-    """Full clustering pipeline: classify, score, snapshot, cache."""
+    """Full clustering pipeline: classify, score, tag, snapshot, cache."""
     assigned = cluster_articles()
     calculate_temperatures()
+    aggregate_theme_tags()
     snapshot_themes()
     themes = cache_themes()
 
