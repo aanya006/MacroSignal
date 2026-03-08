@@ -46,7 +46,7 @@ development_status:
   epic-2: in-progress
   2-1-region-and-asset-class-tagging: done
   2-2-theme-detail-api-and-article-retrieval: done
-  2-3-ai-article-summaries: backlog
+  2-3-ai-article-summaries: done
   2-4-theme-detail-view-ui: done
   2-5-interactive-date-timeline: done
   epic-2-retrospective: optional
