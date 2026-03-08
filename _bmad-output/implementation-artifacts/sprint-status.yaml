@@ -56,8 +56,8 @@ development_status:
   3-2-causal-chain-display-ui: backlog
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-historical-theme-storage-and-pre-seeded-data: backlog
-  4-2-historical-theme-search-api: backlog
+  epic-4: in-progress
+  4-1-historical-theme-storage-and-pre-seeded-data: done
+  4-2-historical-theme-search-api: done
   4-3-memory-search-ui-and-historical-parallels: backlog
   epic-4-retrospective: optional

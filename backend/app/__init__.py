@@ -9,8 +9,10 @@ def create_app():
     from app.routes.status import status_bp
     from app.routes.ingestion import ingestion_bp
     from app.routes.themes import themes_bp
+    from app.routes.memory import memory_bp
     app.register_blueprint(status_bp)
     app.register_blueprint(ingestion_bp)
     app.register_blueprint(themes_bp)
+    app.register_blueprint(memory_bp)
 
     return app
