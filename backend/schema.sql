@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS theme_history (
     score_label VARCHAR(10),
     score_value FLOAT,
     article_count INTEGER,
-    causal_chain TEXT
+    causal_chain TEXT,
+    UNIQUE(theme_id, snapshot_date)
 );
 
 -- Ingestion run tracking
@@ -60,4 +61,5 @@ CREATE INDEX IF NOT EXISTS idx_articles_theme_id ON articles(theme_id);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at);
 CREATE INDEX IF NOT EXISTS idx_themes_slug ON themes(slug);
 CREATE INDEX IF NOT EXISTS idx_theme_history_theme_id ON theme_history(theme_id);
+CREATE INDEX IF NOT EXISTS idx_theme_history_snapshot_date ON theme_history(snapshot_date);
 CREATE INDEX IF NOT EXISTS idx_ingestion_logs_run_at ON ingestion_logs(run_at);

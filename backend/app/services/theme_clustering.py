@@ -243,10 +243,36 @@ def cache_themes():
     return themes
 
 
+def snapshot_themes():
+    """Save a daily snapshot of all themes to theme_history for institutional memory."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    themes = execute_query("SELECT id, score_label, score_value, article_count, causal_chain FROM themes")
+
+    saved = 0
+    for t in themes:
+        try:
+            execute_query(
+                """
+                INSERT INTO theme_history (theme_id, snapshot_date, score_label, score_value, article_count, causal_chain)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (t["id"], today, t["score_label"], t["score_value"], t["article_count"], t["causal_chain"]),
+                fetch=False,
+            )
+            saved += 1
+        except Exception as e:
+            logger.error(f"Error snapshotting theme {t['id']}: {e}")
+
+    logger.info(f"Saved {saved} theme snapshots for {today}")
+    return saved
+
+
 def run_clustering():
-    """Full clustering pipeline: classify, score, cache."""
+    """Full clustering pipeline: classify, score, snapshot, cache."""
     assigned = cluster_articles()
     calculate_temperatures()
+    snapshot_themes()
     themes = cache_themes()
 
     # Count themes with articles for NFR13 check
