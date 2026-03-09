@@ -11,6 +11,7 @@ export const fetchThemeArticles = (slug, date) =>
   api.get(`/themes/${slug}/articles`, { params: { date } })
 export const searchMemory = ({ q, from, to } = {}) =>
   api.get('/memory/search', { params: { q, from, to } })
+export const fetchMarketSignals = (params) => api.get('/signals', { params })
 export const fetchStatus = () => api.get('/status')
 
 export default api

@@ -76,8 +76,9 @@ function ThemeDetailPage() {
     <div className="h-screen flex flex-col bg-[#0f172a] text-slate-200">
       {/* Header */}
       <header className="h-14 px-6 flex items-center justify-between border-b border-slate-700 shrink-0">
-        <Link to="/" className="text-xl font-bold text-white tracking-tight hover:text-blue-400 transition-colors">
-          MacroSignal
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <img src="/microsignal-icon.svg" alt="MacroSignal" className="h-6 w-auto" />
+          <span className="text-xl font-bold text-white tracking-tight">MacroSignal</span>
         </Link>
         <span className="text-xs text-slate-500">Theme Detail</span>
       </header>
@@ -104,9 +105,9 @@ function ThemeDetailPage() {
               articlesByDate={articlesByDate}
             />
 
-            <div className="flex gap-6 min-h-0">
+            <div className="flex gap-6 min-h-0 min-w-0">
               {/* Articles column */}
-              <div className="flex-1 space-y-4 min-w-0">
+              <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
                   Articles
                   {selectedDate && (
@@ -132,7 +133,7 @@ function ThemeDetailPage() {
               </div>
 
               {/* Causal Chain column */}
-              <div className="w-[320px] min-w-[320px]">
+              <div className="w-[320px] shrink-0 overflow-hidden">
                 <CausalChain chain={theme.causal_chain} />
                 <HistoricalParallel theme={theme} />
               </div>

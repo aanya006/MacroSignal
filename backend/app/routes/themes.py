@@ -29,7 +29,7 @@ def get_themes():
             SELECT id, name, slug, description, score_label, score_value, article_count,
                    region_tags, asset_tags, first_seen_at, last_updated_at
             FROM themes
-            WHERE article_count > 0
+            WHERE article_count > 0 AND (is_historical = FALSE OR is_historical IS NULL)
             ORDER BY score_value DESC
             """
         )

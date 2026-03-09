@@ -81,7 +81,7 @@ function ArticleCard({ article }) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex gap-3 p-3 rounded-lg bg-[#1e293b] hover:bg-[#253348] transition-colors group"
+      className="flex gap-3 p-3 rounded-lg bg-[#1e293b] hover:bg-[#253348] transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 group"
     >
       {articleImgSrc ? (
         <img
@@ -107,9 +107,10 @@ function ArticleCard({ article }) {
       <div className="flex-1 min-w-0">
         <h4 className="text-[13px] font-medium text-slate-200 leading-snug group-hover:text-blue-400 transition-colors line-clamp-2">
           {article.title}
+          <span className="inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400">↗</span>
         </h4>
         <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
-          <span>{article.source_name}</span>
+          <span className="font-medium text-slate-400">{article.source_name}</span>
           <span aria-hidden="true">·</span>
           <time dateTime={article.published_at}>{formatDateTime(article.published_at)}</time>
         </div>

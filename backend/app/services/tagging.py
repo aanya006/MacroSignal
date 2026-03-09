@@ -34,18 +34,24 @@ REGION_KEYWORDS = {
     ],
     "Korea": [
         "korea", "korean", "\\bbok\\b", "bank of korea", "seoul", "kospi",
-        "\\bwon\\b", "samsung", "hyundai", "sk hynix",
+        "korean won", "\\bkrw\\b", "samsung", "hyundai", "sk hynix",
     ],
     "India": [
         "india", "indian", "\\brbi\\b", "reserve bank of india", "mumbai",
         "\\brupee\\b", "\\binr\\b", "sensex", "nifty", "modi", "new delhi",
+    ],
+    "Middle East": [
+        "middle east", "saudi", "arabia", "\\buae\\b", "dubai", "abu dhabi",
+        "iran", "iranian", "iraq", "iraqi", "opec", "qatar", "kuwait",
+        "bahrain", "oman", "israel", "palestinian", "gaza", "\\bidf\\b",
+        "hezbollah", "houthi", "red sea", "strait of hormuz", "riyadh",
     ],
 }
 
 # Asset classes required by AC: Equities, Bonds, FX, Commodities
 ASSET_KEYWORDS = {
     "Equities": [
-        "equit", "stock", "shares", "nasdaq", "s&p", "dow jones", "nikkei",
+        "equit(?:y|ies)", "stock", "shares", "nasdaq", "s&p", "dow jones", "nikkei",
         "hang seng", "\\bsti\\b", "bull market", "bear market",
         "tech sector", "semiconductor", "stock market",
     ],

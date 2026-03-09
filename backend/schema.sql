@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS themes (
     asset_tags TEXT[],
     causal_chain JSONB,
     causal_chain_generated_at TIMESTAMP,
+    is_historical BOOLEAN DEFAULT FALSE,
     first_seen_at TIMESTAMP DEFAULT NOW(),
     last_updated_at TIMESTAMP DEFAULT NOW()
 );

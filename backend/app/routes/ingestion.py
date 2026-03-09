@@ -46,3 +46,30 @@ def backfill_images():
         return jsonify({"data": result, "meta": {"last_updated": datetime.now(timezone.utc).isoformat()}})
     except Exception as e:
         return jsonify({"error": True, "message": str(e), "code": "BACKFILL_ERROR"}), 500
+
+
+@ingestion_bp.route('/api/admin/reclassify', methods=['POST'])
+def trigger_reclassify():
+    """Wipe all theme assignments and reclassify against new 21 narrative themes.
+
+    One-time admin endpoint — not for regular ingestion cycles.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("Admin reclassification triggered")
+    try:
+        from app.services.theme_clustering import reclassify_all_articles
+        result = reclassify_all_articles()
+        return jsonify({
+            "data": result,
+            "meta": {
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }
+        })
+    except Exception as e:
+        logger.error(f"Reclassification failed: {e}")
+        return jsonify({
+            "error": True,
+            "message": str(e),
+            "code": "RECLASSIFY_ERROR"
+        }), 500

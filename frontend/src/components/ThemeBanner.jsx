@@ -16,15 +16,15 @@ function ThemeBanner({ theme, showLink = true }) {
       className="rounded-lg p-6"
       style={{ backgroundColor: 'rgba(30, 41, 59, 0.8)', borderBottom: `2px solid ${accent}` }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-4 min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold text-slate-100">{theme.name}</h2>
           {theme.description && (
             <p className="mt-2 text-sm text-slate-400">{theme.description}</p>
           )}
         </div>
         <div className="flex items-center gap-3">
-          {showLink && theme.slug ? (
+          {showLink === 'none' ? null : showLink && theme.slug ? (
             <Link
               to={`/theme/${theme.slug}`}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 rounded-full px-3 py-1 transition-colors"

@@ -51,7 +51,7 @@ function ImpactCard({ asset, impact, historical }) {
           {displayLabel}
         </span>
       </div>
-      <p className="text-xs text-slate-300 leading-relaxed">
+      <p className="text-xs text-slate-300 leading-relaxed break-words">
         {impact?.summary || 'No data available'}
       </p>
     </div>
@@ -65,9 +65,16 @@ function CausalChain({ chain, historical }) {
         <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-slate-500">
           {historical ? 'What Happened' : 'Causal Chain'}
         </div>
-        <div className="rounded-lg bg-[#1e293b] p-4">
+        <div className="rounded-lg bg-[#1e293b] p-4 space-y-2">
           <p className="text-sm text-slate-500">
-            {historical ? 'Historical analysis not yet available.' : 'Causal analysis not yet available.'}
+            {historical
+              ? 'Historical analysis not yet available.'
+              : 'Causal chain not yet generated.'}
+          </p>
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            {historical
+              ? 'More archived data is needed to reconstruct the causal sequence for this event.'
+              : 'This theme needs more articles before a trigger → mechanism → impact chain can be identified.'}
           </p>
         </div>
       </div>
@@ -85,7 +92,7 @@ function CausalChain({ chain, historical }) {
         <div className="text-[10px] font-bold uppercase tracking-[1px] text-red-500 mb-1.5">
           Trigger
         </div>
-        <p className="text-[13px] text-slate-200 leading-relaxed">{chain.trigger}</p>
+        <p className="text-[13px] text-slate-200 leading-relaxed break-words">{chain.trigger}</p>
       </div>
 
       <CausalArrow />
@@ -95,7 +102,7 @@ function CausalChain({ chain, historical }) {
         <div className="text-[10px] font-bold uppercase tracking-[1px] text-amber-500 mb-1.5">
           Mechanism
         </div>
-        <p className="text-[13px] text-slate-200 leading-relaxed">{chain.mechanism}</p>
+        <p className="text-[13px] text-slate-200 leading-relaxed break-words">{chain.mechanism}</p>
       </div>
 
       <CausalArrow />

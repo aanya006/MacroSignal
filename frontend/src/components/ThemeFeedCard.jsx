@@ -30,16 +30,18 @@ function ThemeFeedCard({ theme, isSelected, onSelect, onKeyDown }) {
       tabIndex={0}
       onClick={() => onSelect(theme)}
       onKeyDown={onKeyDown}
-      className="p-4 rounded-lg bg-[#1e293b] border-l-2 cursor-pointer transition-colors hover:bg-[#334155] focus:outline-none focus:ring-1 focus:ring-slate-500"
+      className={`p-3 rounded-lg border-l-2 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 focus:outline-none focus:ring-1 focus:ring-slate-500 ${
+        isSelected ? 'bg-[#253348]' : 'bg-[#1e293b] hover:bg-[#334155]'
+      }`}
       style={{ borderLeftColor: borderColor }}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-lg font-semibold text-slate-100 leading-tight">
+        <h3 className="text-sm font-semibold text-slate-100 leading-tight">
           {theme.name}
         </h3>
         <TemperatureBadge label={theme.score_label} />
       </div>
-      <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
         <span>{theme.article_count} articles</span>
         {theme.last_updated_at && (
           <>

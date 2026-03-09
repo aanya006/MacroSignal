@@ -20,16 +20,6 @@ def search_memory():
     try:
         query = request.args.get("q", "").strip()
 
-        if not query:
-            return jsonify({
-                "data": [],
-                "meta": {
-                    "last_updated": datetime.now(timezone.utc).isoformat(),
-                    "count": 0,
-                    "query": "",
-                }
-            })
-
         from_date = request.args.get("from", "").strip() or None
         to_date = request.args.get("to", "").strip() or None
 
@@ -38,10 +28,6 @@ def search_memory():
             from_date = None
         if to_date and not DATE_RE.match(to_date):
             to_date = None
-
-        # Escape ILIKE wildcards in user input
-        escaped = query.replace("%", "\\%").replace("_", "\\_")
-        search_pattern = f"%{escaped}%"
 
         # Build optional date filter clauses
         date_clauses = ""
@@ -53,30 +39,48 @@ def search_memory():
             date_clauses += " AND t.last_updated_at <= %s"
             date_params.append(to_date)
 
-        # Search themes where name/description match OR any linked article title matches
-        # Rank by: direct theme match first, then by article count (proxy for relevance), then recency
-        results = execute_query(
-            f"""
-            SELECT DISTINCT
-                t.id, t.name, t.slug, t.description,
-                t.score_label, t.score_value, t.article_count,
-                t.first_seen_at, t.last_updated_at, t.causal_chain,
-                CASE
-                    WHEN t.name ILIKE %s THEN 3
-                    WHEN t.description ILIKE %s THEN 2
-                    ELSE 1
-                END as relevance
-            FROM themes t
-            LEFT JOIN articles a ON a.theme_id = t.id
-            WHERE t.first_seen_at < NOW() - INTERVAL '7 days'
-               AND (t.name ILIKE %s
-               OR t.description ILIKE %s
-               OR a.title ILIKE %s){date_clauses}
-            ORDER BY relevance DESC, t.last_updated_at DESC
-            LIMIT 20
-            """,
-            (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, *date_params),
-        )
+        if query:
+            # Keyword search: match against theme names, descriptions, and article titles
+            escaped = query.replace("%", "\\%").replace("_", "\\_")
+            search_pattern = f"%{escaped}%"
+
+            results = execute_query(
+                f"""
+                SELECT DISTINCT
+                    t.id, t.name, t.slug, t.description,
+                    t.score_label, t.score_value, t.article_count,
+                    t.first_seen_at, t.last_updated_at, t.causal_chain,
+                    CASE
+                        WHEN t.name ILIKE %s THEN 3
+                        WHEN t.description ILIKE %s THEN 2
+                        ELSE 1
+                    END as relevance
+                FROM themes t
+                LEFT JOIN articles a ON a.theme_id = t.id
+                WHERE t.is_historical = TRUE
+                   AND (t.name ILIKE %s
+                   OR t.description ILIKE %s
+                   OR a.title ILIKE %s){date_clauses}
+                ORDER BY relevance DESC, t.last_updated_at DESC
+                LIMIT 20
+                """,
+                (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, *date_params),
+            )
+        else:
+            # No query: return all historical themes (browseable default)
+            results = execute_query(
+                f"""
+                SELECT
+                    t.id, t.name, t.slug, t.description,
+                    t.score_label, t.score_value, t.article_count,
+                    t.first_seen_at, t.last_updated_at, t.causal_chain,
+                    1 as relevance
+                FROM themes t
+                WHERE t.is_historical = TRUE{date_clauses}
+                ORDER BY t.first_seen_at ASC
+                """,
+                (*date_params,) if date_params else None,
+            )
 
         # Deduplicate (LEFT JOIN can produce dupes)
         seen_ids = set()

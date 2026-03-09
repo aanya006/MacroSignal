@@ -1,21 +1,39 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { searchMemory } from '../api/client'
 
 // Stop words to filter out when extracting search keywords
 const STOP_WORDS = new Set([
   '&', 'and', 'the', 'of', 'in', 'on', 'for', 'to', 'a', 'an',
   'markets', 'market', 'sector', 'economy', 'economic', 'outlook',
-  'global', 'general', 'policy', 'trajectory',
+  'global', 'general', 'policy', 'trajectory', 'new', 'risk',
+  'dynamics', 'management', 'path', 'shift', 'conditions',
 ])
 
-function extractKeyword(name) {
-  const words = name.split(/\s+/).filter((w) => !STOP_WORDS.has(w.toLowerCase()))
-  // Return the first meaningful word
-  return words[0] || name.split(/\s+/)[0]
+// Domain-aware synonyms so themes find relevant historical parallels
+const KEYWORD_SYNONYMS = {
+  'Energy': 'Oil',
+  'Conflict': 'War',
+  'Compute': 'Bubble',
+  'BOJ': 'Franc',
+  'Easing': 'Stimulus',
+  'Slowdown': 'Crisis',
+  'Fiscal': 'Debt',
+  'Shadow': 'Financial',
 }
 
-function HistoricalParallel({ theme }) {
+function extractKeywords(name) {
+  const words = name.split(/[\s&/]+/).filter((w) => {
+    const lower = w.toLowerCase().replace(/[^a-z]/g, '')
+    return lower.length > 1 && !STOP_WORDS.has(lower)
+  })
+  const cleaned = words.slice(0, 4).map((w) => w.replace(/[^a-zA-Z0-9+.-]/g, ''))
+  // Add synonyms for better historical matching
+  const extra = cleaned.flatMap((w) => KEYWORD_SYNONYMS[w] ? [KEYWORD_SYNONYMS[w]] : [])
+  // Deduplicate and return up to 4 keywords
+  return [...new Set([...cleaned, ...extra])].slice(0, 4)
+}
+
+function HistoricalParallel({ theme, onOpenPrecedent }) {
   const [parallel, setParallel] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -28,13 +46,30 @@ function HistoricalParallel({ theme }) {
     let cancelled = false
     setLoading(true)
 
-    const keyword = extractKeyword(theme.name)
-    searchMemory({ q: keyword })
-      .then((res) => {
+    const keywords = extractKeywords(theme.name)
+    // Search with each keyword in parallel, pick the best match
+    Promise.all(keywords.map((kw) => searchMemory({ q: kw }).catch(() => ({ data: { data: [] } }))))
+      .then((responses) => {
         if (cancelled) return
-        const results = res.data?.data || []
-        const match = results.find((r) => r.slug !== theme.slug)
-        setParallel(match || null)
+        // Collect all unique matches (exclude self), track which appeared most
+        const hits = new Map()
+        for (const res of responses) {
+          const results = res.data?.data || []
+          for (const r of results) {
+            if (r.slug === theme.slug) continue
+            const prev = hits.get(r.slug)
+            if (prev) {
+              prev.count += 1
+            } else {
+              hits.set(r.slug, { ...r, count: 1 })
+            }
+          }
+        }
+        // Sort by number of keyword hits (more = better match), then by article_count
+        const sorted = [...hits.values()].sort(
+          (a, b) => b.count - a.count || (b.article_count || 0) - (a.article_count || 0)
+        )
+        setParallel(sorted[0] || null)
       })
       .catch(() => {
         if (!cancelled) setParallel(null)
@@ -46,7 +81,19 @@ function HistoricalParallel({ theme }) {
     return () => { cancelled = true }
   }, [theme?.name, theme?.slug])
 
-  if (loading || !parallel) return null
+  if (loading) {
+    return (
+      <div className="mt-4 pt-4 border-t border-dashed border-slate-700 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="skeleton w-5 h-5 rounded-full" />
+          <div className="skeleton h-3 w-32" />
+        </div>
+        <div className="skeleton h-24 w-full rounded-lg" />
+      </div>
+    )
+  }
+
+  if (!parallel) return null
 
   const dateRange = parallel.date_range?.earliest
     ? `${new Date(parallel.date_range.earliest).toLocaleDateString('en-SG', { month: 'short', year: 'numeric' })}`
@@ -59,13 +106,13 @@ function HistoricalParallel({ theme }) {
           H
         </span>
         <span className="text-[11px] font-semibold uppercase tracking-[1.2px] text-purple-400">
-          Historical Parallel
+          Historical Precedent
         </span>
       </div>
 
-      <Link
-        to={`/theme/${parallel.slug}`}
-        className="block rounded-lg p-3 border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 transition-colors"
+      <button
+        onClick={() => onOpenPrecedent?.(parallel)}
+        className="block w-full text-left rounded-lg p-3 border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 transition-colors cursor-pointer"
       >
         <div className="flex items-start justify-between gap-2">
           <h4 className="text-sm font-semibold text-purple-300">
@@ -81,11 +128,9 @@ function HistoricalParallel({ theme }) {
           {parallel.description}
         </p>
         <div className="flex items-center gap-2 mt-2 text-[10px] text-purple-400/60">
-          <span>{parallel.article_count} articles</span>
-          <span aria-hidden="true">·</span>
-          <span>Peak: {String(parallel.peak_temperature || 'cool').toUpperCase()}</span>
+          <span>View full precedent →</span>
         </div>
-      </Link>
+      </button>
     </div>
   )
 }

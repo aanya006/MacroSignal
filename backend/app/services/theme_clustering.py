@@ -2,89 +2,121 @@ import json
 import logging
 import math
 import re
+import time
 from datetime import datetime, timezone
 
-from app.models.db import execute_query
+from app.models.db import execute_query, get_connection, release_connection
 from app.utils.cache import cache_set
 
 logger = logging.getLogger(__name__)
 
-# Predefined theme definitions with keyword matching
+# 21 curated narrative themes — Watch List
+# Keywords are broad fallback only, used when Claude API is unavailable
 THEME_DEFINITIONS = {
-    "fed-policy": {
-        "name": "Fed Policy Trajectory",
-        "keywords": ["federal reserve", "fed ", "fomc", "powell", "us interest rate", "fed funds", "fed rate"],
-        "description": "US Federal Reserve monetary policy decisions and trajectory",
+    "us-policy-regime-shift": {
+        "name": "US Policy Regime Shift (Trump 2.0 / DOGE)",
+        "keywords": ["trump", "doge", "executive order", "deregulation", "government efficiency", "musk", "tariff executive"],
+        "description": "Executive orders, deregulation, government efficiency initiatives",
     },
-    "mas-policy": {
-        "name": "MAS Monetary Policy",
-        "keywords": ["mas ", "monetary authority of singapore", "singapore dollar", "sgd", "neer", "s$neer", "mas policy"],
-        "description": "Monetary Authority of Singapore policy and SGD management",
+    "us-china-tariffs-tech-decoupling": {
+        "name": "US-China Tariffs & Tech Decoupling",
+        "keywords": ["us china tariff", "trade war", "tech decoupling", "export control", "chip ban", "reshoring", "us china trade"],
+        "description": "Bilateral tariffs, export controls, tech bans, supply chain reshoring",
     },
-    "china-economy": {
-        "name": "China Economic Outlook",
-        "keywords": ["china gdp", "china manufacturing", "pmi china", "chinese economy", "yuan", "pboc", "china growth", "china trade"],
-        "description": "Chinese economic indicators, growth, and PBOC policy",
+    "us-fed-rate-path": {
+        "name": "US Fed Rate Path & Forward Guidance",
+        "keywords": ["federal reserve", "fed rate", "fomc", "powell", "fed funds", "rate cut", "rate hike", "fed policy"],
+        "description": "Federal Reserve rate decisions, FOMC statements, inflation targeting",
     },
-    "us-inflation": {
-        "name": "US Inflation & CPI",
-        "keywords": ["us inflation", "cpi ", "consumer price", "pce ", "us prices", "inflation rate"],
-        "description": "US inflation data, CPI releases, and price trends",
+    "europe-rearmament-defense": {
+        "name": "Europe Rearmament & Defense Capex",
+        "keywords": ["europe defense", "nato spending", "rearmament", "defense budget", "european defense", "defense stock", "military spending europe"],
+        "description": "European defense spending increases, NATO commitments, defense stocks",
     },
-    "global-trade": {
-        "name": "Global Trade & Tariffs",
-        "keywords": ["tariff", "trade war", "trade deal", "wto", "export ban", "import dut", "trade tension", "trade policy"],
-        "description": "International trade disputes, tariffs, and trade agreements",
+    "ai-disruption-compute": {
+        "name": "AI Disruption & Compute Infrastructure",
+        "keywords": ["artificial intelligence", "ai model", "gpu", "data center", "nvidia", "ai regulation", "compute", "machine learning"],
+        "description": "AI model advances, GPU/chip demand, data center buildout, AI regulation",
     },
-    "oil-energy": {
-        "name": "Oil & Energy Markets",
-        "keywords": ["oil price", "crude oil", "opec", "brent", "energy market", "natural gas", "petroleum"],
-        "description": "Oil prices, OPEC decisions, and global energy markets",
+    "middle-east-conflict-energy": {
+        "name": "Middle East Conflict & Energy Risk",
+        "keywords": ["middle east conflict", "iran", "israel", "houthi", "strait of hormuz", "gaza", "oil supply risk", "red sea"],
+        "description": "Regional conflicts affecting oil supply, Strait of Hormuz, energy prices",
     },
-    "ecb-europe": {
-        "name": "ECB & European Economy",
-        "keywords": ["ecb", "european central bank", "eurozone", "eu economy", "euro ", "lagarde"],
-        "description": "European Central Bank policy and eurozone economy",
+    "russia-ukraine-european-security": {
+        "name": "Russia-Ukraine War & European Security",
+        "keywords": ["russia ukraine", "ukraine war", "sanctions russia", "european energy", "nato", "zelensky", "putin"],
+        "description": "War developments, sanctions, European energy security, NATO",
     },
-    "boj-japan": {
-        "name": "BOJ & Japan Economy",
-        "keywords": ["boj", "bank of japan", "yen ", "japan economy", "yield curve control", "ueda", "japanese yen"],
-        "description": "Bank of Japan policy, yen dynamics, and Japanese economy",
+    "china-economic-slowdown": {
+        "name": "China Economic Slowdown & Property Crisis",
+        "keywords": ["china gdp", "china property", "evergrande", "china deflation", "chinese economy", "country garden", "china consumer"],
+        "description": "GDP growth, property developer defaults, consumer confidence, deflation",
     },
-    "emerging-markets": {
-        "name": "Emerging Markets",
-        "keywords": ["emerging market", "asean", "developing econom", "em bonds", "em currenc", "frontier market"],
-        "description": "Emerging and frontier market economies and investments",
+    "china-pboc-stimulus": {
+        "name": "China PBOC Stimulus & Monetary Easing",
+        "keywords": ["pboc", "china rate cut", "rrr cut", "china stimulus", "china liquidity", "china fiscal", "china easing"],
+        "description": "Rate cuts, RRR cuts, liquidity injections, fiscal stimulus packages",
     },
-    "tech-sector": {
-        "name": "Technology Sector",
-        "keywords": ["tech stock", "semiconductor", "ai stock", "nasdaq", "big tech", "chip", "nvidia", "tech sector"],
-        "description": "Technology sector performance, semiconductors, and AI",
+    "critical-minerals-semiconductors": {
+        "name": "Critical Minerals & Semiconductor Supply",
+        "keywords": ["semiconductor supply", "rare earth", "lithium", "chip shortage", "tsmc", "critical mineral", "cobalt"],
+        "description": "Chip supply chains, rare earths, lithium, export restrictions",
     },
-    "geopolitical": {
-        "name": "Geopolitical Risk",
-        "keywords": ["geopolitical", "sanctions", "conflict", "military", "geopolitic", "tensions"],
-        "description": "Geopolitical risks, sanctions, and global security events",
+    "global-sovereign-debt": {
+        "name": "Global Sovereign Debt & Fiscal Sustainability",
+        "keywords": ["sovereign debt", "fiscal deficit", "government debt", "bond vigilante", "debt crisis", "debt ceiling", "fiscal sustainability"],
+        "description": "Government debt levels, fiscal deficits, bond vigilantes, debt crises",
     },
-    "bonds-rates": {
-        "name": "Bond Markets & Yields",
-        "keywords": ["bond yield", "treasury", "sovereign debt", "yield curve", "bond market", "government bond"],
-        "description": "Global bond markets, treasury yields, and fixed income",
+    "emerging-market-stress": {
+        "name": "Emerging Market Currency & Debt Stress",
+        "keywords": ["emerging market", "em currency", "capital flight", "dollar debt", "em crisis", "frontier market", "em bond"],
+        "description": "EM currency depreciation, dollar-denominated debt, capital flight",
     },
-    "fx-currency": {
-        "name": "FX & Currency Markets",
-        "keywords": ["forex", "currency", "exchange rate", "dollar index", "dxy", "fx market"],
-        "description": "Foreign exchange markets and currency movements",
+    "india-growth-ascent": {
+        "name": "India's Growth Ascent",
+        "keywords": ["india gdp", "india growth", "india manufacturing", "modi", "india reform", "india market", "india demographic"],
+        "description": "GDP growth, manufacturing shift, demographic dividend, market reforms",
     },
-    "commodities": {
-        "name": "Commodities & Metals",
-        "keywords": ["gold price", "silver", "copper", "commodity", "metals", "iron ore"],
-        "description": "Commodity prices, precious metals, and raw materials",
+    "opec-oil-supply": {
+        "name": "OPEC+ Production & Oil Supply Politics",
+        "keywords": ["opec", "oil production", "saudi oil", "oil quota", "oil price", "crude oil", "brent", "oil supply"],
+        "description": "Production quotas, Saudi-Russia dynamics, oil price management",
     },
-    "general-macro": {
-        "name": "General Macro",
-        "keywords": [],
-        "description": "General macroeconomic news and analysis",
+    "labor-immigration-demographics": {
+        "name": "Labor Markets, Immigration & Demographics",
+        "keywords": ["labor market", "wage growth", "labor shortage", "immigration policy", "aging population", "unemployment", "jobs report"],
+        "description": "Wage growth, labor shortages, immigration policy, aging populations",
+    },
+    "credit-shadow-banking": {
+        "name": "Credit Conditions & Shadow Banking Risk",
+        "keywords": ["credit spread", "private credit", "banking stress", "lending standard", "shadow banking", "credit crunch", "bank failure"],
+        "description": "Credit spreads, private credit, banking stress, lending standards",
+    },
+    "nuclear-energy-renaissance": {
+        "name": "Nuclear Energy Renaissance",
+        "keywords": ["nuclear energy", "nuclear reactor", "smr", "uranium", "nuclear power", "nuclear policy", "small modular reactor"],
+        "description": "New reactor builds, SMRs, nuclear policy shifts, uranium demand",
+    },
+    "boj-yen-dynamics": {
+        "name": "BOJ Policy Normalization & Yen Dynamics",
+        "keywords": ["boj", "bank of japan", "yen", "yield curve control", "ueda", "japanese yen", "yen carry trade"],
+        "description": "Rate hikes, yield curve control changes, yen carry trade",
+    },
+    "de-dollarization": {
+        "name": "De-dollarization & Reserve Currency Shifts",
+        "keywords": ["de-dollarization", "brics currency", "gold reserve", "yuan internationalization", "reserve currency", "dollar decline"],
+        "description": "BRICS alternatives, gold reserves, yuan internationalization",
+    },
+    "china-taiwan-indo-pacific": {
+        "name": "China-Taiwan Tensions & Indo-Pacific Security",
+        "keywords": ["taiwan", "china taiwan", "indo-pacific", "south china sea", "aukus", "taiwan strait", "taiwan semiconductor"],
+        "description": "Military posturing, semiconductor supply risk, alliance dynamics",
+    },
+    "mas-sgd-policy": {
+        "name": "MAS Policy & SGD Management",
+        "keywords": ["mas ", "mas.", "mas,", "monetary authority of singapore", "singapore dollar", "sgd", "neer", "s$neer", "mas policy"],
+        "description": "Singapore monetary policy, S$NEER band adjustments, regional FX impact",
     },
 }
 
@@ -98,20 +130,31 @@ def generate_slug(name):
 
 
 def classify_article(article):
-    """Classify an article into matching theme slugs."""
-    text = f"{article.get('title', '')} {article.get('full_text', '')}".lower()
-    matches = []
+    """Classify an article into matching theme slugs.
 
+    Uses Claude Haiku first, falls back to keyword matching if Claude is unavailable.
+    Returns list of slug strings (0 or 1 items).
+    """
+    title = article.get("title", "")
+    full_text = article.get("full_text", "")
+
+    # Try Claude classification first
+    try:
+        from app.services.theme_classifier import classify_article_with_claude
+        slug = classify_article_with_claude(title, full_text)
+        if slug:
+            return [slug]
+    except Exception as e:
+        logger.warning(f"Claude classification failed, falling back to keywords: {e}")
+
+    # Keyword fallback
+    text = f"{title} {full_text}".lower()
+    matches = []
     for slug, theme in THEME_DEFINITIONS.items():
-        if slug == "general-macro":
-            continue
         if any(kw in text for kw in theme["keywords"]):
             matches.append(slug)
 
-    if not matches:
-        matches.append("general-macro")
-
-    return matches
+    return matches[:1] if matches else []
 
 
 def cluster_articles():
@@ -134,10 +177,14 @@ def cluster_articles():
     themes = execute_query("SELECT id, slug FROM themes")
     slug_to_id = {t["slug"]: t["id"] for t in themes}
 
-    # Classify and assign each article to its best match (first match)
+    # Classify and assign each article to its best match
     assigned = 0
     for article in unassigned:
         matches = classify_article(article)
+
+        if not matches:
+            continue
+
         best_match = matches[0]
         theme_id = slug_to_id.get(best_match)
 
@@ -152,6 +199,11 @@ def cluster_articles():
             except Exception as e:
                 logger.error(f"Error assigning article {article['id']}: {e}")
 
+        # Rate-limit delay only when Claude API is active
+        from app.utils.config import ANTHROPIC_API_KEY
+        if ANTHROPIC_API_KEY:
+            time.sleep(0.3)
+
     logger.info(f"Assigned {assigned} articles to themes")
     return assigned
 
@@ -164,7 +216,7 @@ def create_or_update_themes():
                 """
                 INSERT INTO themes (name, slug, description, score_label, score_value, article_count, first_seen_at, last_updated_at)
                 VALUES (%s, %s, %s, 'cool', 0, 0, NOW(), NOW())
-                ON CONFLICT (slug) DO NOTHING
+                ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description
                 """,
                 (definition["name"], slug, definition["description"]),
                 fetch=False,
@@ -252,7 +304,7 @@ def cache_themes():
         SELECT id, name, slug, description, score_label, score_value, article_count,
                region_tags, asset_tags, first_seen_at, last_updated_at
         FROM themes
-        WHERE article_count > 0
+        WHERE article_count > 0 AND (is_historical = FALSE OR is_historical IS NULL)
         ORDER BY score_value DESC
         """
     )
@@ -338,6 +390,53 @@ def aggregate_theme_tags():
             logger.error(f"Error aggregating tags for theme {theme['id']}: {e}")
 
     logger.info("Theme-level tags aggregated from articles")
+
+
+def reclassify_all_articles():
+    """Wipe all theme assignments and reclassify everything against the new 21 themes.
+
+    Uses a single transaction for the wipe phase (steps 1-3) since execute_query()
+    auto-commits per call on separate connections and cannot do multi-statement transactions.
+    """
+    logger.info("Starting full reclassification...")
+
+    # Wipe phase — single transaction via raw connection
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE articles SET theme_id = NULL")
+            cur.execute("DELETE FROM theme_history WHERE theme_id IN (SELECT id FROM themes)")
+            cur.execute("DELETE FROM themes")
+        conn.commit()
+        logger.info("Wipe phase complete: articles unlinked, theme_history and themes deleted")
+    except Exception:
+        conn.rollback()
+        logger.error("Wipe phase failed, rolling back")
+        raise
+    finally:
+        release_connection(conn)
+
+    # Rebuild phase — normal execute_query() calls
+    assigned = cluster_articles()
+    calculate_temperatures()
+    aggregate_theme_tags()
+
+    # Generate causal chains for hot themes
+    try:
+        from app.services.causal_chain import generate_chains_for_hot_themes
+        generate_chains_for_hot_themes()
+    except Exception as e:
+        logger.error(f"Causal chain generation error during reclassification: {e}")
+
+    snapshot_themes()
+    themes = cache_themes()
+
+    logger.info(f"Reclassification complete: {assigned} articles assigned to {len(themes)} themes")
+    return {
+        "articles_assigned": assigned,
+        "themes_created": len(themes),
+        "themes": [{"name": t["name"], "score": t["score_label"], "articles": t["article_count"]} for t in themes],
+    }
 
 
 def run_clustering():

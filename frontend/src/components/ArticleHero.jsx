@@ -73,7 +73,7 @@ function ArticleHero({ article }) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block rounded-lg bg-[#1e293b] overflow-hidden hover:bg-[#253348] transition-colors group"
+      className="block rounded-lg bg-[#1e293b] overflow-hidden hover:bg-[#253348] transition-all duration-200 hover:shadow-lg hover:shadow-black/20 group"
     >
       {showImage ? (
         <img
@@ -101,6 +101,7 @@ function ArticleHero({ article }) {
       <div className="p-4">
         <h3 className="text-base font-semibold text-slate-100 leading-snug group-hover:text-blue-400 transition-colors">
           {article.title}
+          <span className="inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400">↗</span>
         </h3>
         <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400">
           <span className="font-medium text-slate-300">{article.source_name}</span>
