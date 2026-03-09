@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import re
 from datetime import datetime, timezone
 
@@ -172,47 +173,72 @@ def create_or_update_themes():
             logger.error(f"Error creating theme '{slug}': {e}")
 
 
+# 24-hour half-life: score = Σ exp(-λ * age_hours) for articles in last 7 days.
+# Each article contributes at most 1.0 (just published), decaying to 0.5 at 24h, 0.25 at 48h, etc.
+_DECAY_HALF_LIFE_HOURS = 24
+_DECAY_LAMBDA = math.log(2) / _DECAY_HALF_LIFE_HOURS
+_HOT_THRESHOLD = 3.0   # ~3+ fresh articles in last 24h
+_WARM_THRESHOLD = 1.0  # ~1-2 fresh articles
+
+
 def calculate_temperatures():
-    """Calculate temperature scores for all themes based on article count and recency."""
+    """Calculate temperature scores for all themes using exponential decay.
+
+    Score = Σ exp(-λ * age_hours) for articles published in the last 7 days,
+    where λ = ln(2) / 24 gives a 24-hour half-life. Articles older than 7 days
+    contribute < 0.008 each and are ignored.
+    """
+    now = datetime.now(timezone.utc)
+
+    # Single query for all recent articles across all themes
+    articles = execute_query(
+        """
+        SELECT theme_id, published_at FROM articles
+        WHERE published_at >= NOW() - INTERVAL '7 days'
+        AND theme_id IS NOT NULL
+        """
+    )
+
+    # Total article counts per theme (all time, for article_count column)
+    total_counts = execute_query(
+        "SELECT theme_id, COUNT(*) as total FROM articles WHERE theme_id IS NOT NULL GROUP BY theme_id"
+    )
+    total_by_theme = {r["theme_id"]: r["total"] for r in total_counts}
+
+    # Compute decay scores in Python
+    scores = {}
+    for a in articles:
+        tid = a["theme_id"]
+        pub = a["published_at"]
+        # Normalize to tz-aware if DB returns naive datetimes
+        if pub.tzinfo is None:
+            pub = pub.replace(tzinfo=timezone.utc)
+        age_hours = (now - pub).total_seconds() / 3600
+        scores[tid] = scores.get(tid, 0.0) + math.exp(-_DECAY_LAMBDA * age_hours)
+
     themes = execute_query("SELECT id, slug FROM themes")
-
     for theme in themes:
+        tid = theme["id"]
+        score_value = round(scores.get(tid, 0.0), 4)
+        total = total_by_theme.get(tid, 0)
+
+        if score_value >= _HOT_THRESHOLD:
+            score_label = "hot"
+        elif score_value >= _WARM_THRESHOLD:
+            score_label = "warm"
+        else:
+            score_label = "cool"
+
         try:
-            counts = execute_query(
-                """
-                SELECT
-                    COUNT(*) FILTER (WHERE published_at >= NOW() - INTERVAL '24 hours') as last_24h,
-                    COUNT(*) FILTER (WHERE published_at >= NOW() - INTERVAL '72 hours' AND published_at < NOW() - INTERVAL '24 hours') as last_72h,
-                    COUNT(*) FILTER (WHERE published_at < NOW() - INTERVAL '72 hours') as older,
-                    COUNT(*) as total
-                FROM articles WHERE theme_id = %s
-                """,
-                (theme["id"],),
-            )
-
-            if not counts:
-                continue
-
-            c = counts[0]
-            score_value = (c["last_24h"] * 3) + (c["last_72h"] * 1.5) + (c["older"] * 0.5)
-
-            if score_value >= 10:
-                score_label = "hot"
-            elif score_value >= 4:
-                score_label = "warm"
-            else:
-                score_label = "cool"
-
             execute_query(
                 """
                 UPDATE themes
                 SET score_label = %s, score_value = %s, article_count = %s, last_updated_at = NOW()
                 WHERE id = %s
                 """,
-                (score_label, score_value, c["total"], theme["id"]),
+                (score_label, score_value, total, theme["id"]),
                 fetch=False,
             )
-
         except Exception as e:
             logger.error(f"Error scoring theme {theme['slug']}: {e}")
 
