@@ -1,0 +1,15 @@
+services:
+  postgres:
+    restart: always
+
+  redis:
+    restart: always
+
+  backend:
+    restart: always
+    command: gunicorn -b 0.0.0.0:5001 --workers 2 --timeout 120 wsgi:app
+
+  frontend:
+    restart: always
+    ports:
+      - "80:80"
