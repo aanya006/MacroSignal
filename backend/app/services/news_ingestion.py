@@ -95,6 +95,36 @@ def enrich_with_og_images(articles, max_workers=6):
     logger.info(f"OG image scraping complete: {fetched}/{len(to_scrape)} found")
 
 
+def backfill_tags(batch_size=1000):
+    """Re-run classify_tags on all existing articles and update region/asset tags in DB."""
+    rows = execute_query(
+        "SELECT id, title, full_text FROM articles ORDER BY ingested_at DESC LIMIT %s",
+        (batch_size,),
+    )
+    if not rows:
+        logger.info("backfill_tags: no articles found")
+        return {"updated": 0, "total": 0}
+
+    logger.info(f"backfill_tags: re-tagging {len(rows)} articles...")
+    updated = 0
+
+    for row in rows:
+        try:
+            text = f"{row['title'] or ''} {row['full_text'] or ''}"
+            regions, assets = classify_tags(text)
+            execute_query(
+                "UPDATE articles SET region_tags = %s, asset_tags = %s WHERE id = %s",
+                (regions or None, assets or None, row["id"]),
+                fetch=False,
+            )
+            updated += 1
+        except Exception as e:
+            logger.error(f"backfill_tags error for id={row['id']}: {e}")
+
+    logger.info(f"backfill_tags: updated {updated}/{len(rows)} articles")
+    return {"updated": updated, "total": len(rows)}
+
+
 def backfill_og_images(batch_size=100, max_workers=6):
     """Scrape og:image for existing DB articles that have no image_url."""
     rows = execute_query(

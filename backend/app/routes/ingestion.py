@@ -24,6 +24,18 @@ def trigger_ingestion():
         }), 500
 
 
+@ingestion_bp.route('/api/ingest/backfill-tags', methods=['POST'])
+def backfill_tags():
+    """Re-run classify_tags on all existing articles. Accepts ?batch=N (default 1000)."""
+    try:
+        from app.services.news_ingestion import backfill_tags as _backfill_tags
+        batch = int(request.args.get("batch", 1000))
+        result = _backfill_tags(batch_size=batch)
+        return jsonify({"data": result, "meta": {"last_updated": datetime.now(timezone.utc).isoformat()}})
+    except Exception as e:
+        return jsonify({"error": True, "message": str(e), "code": "BACKFILL_ERROR"}), 500
+
+
 @ingestion_bp.route('/api/ingest/backfill-images', methods=['POST'])
 def backfill_images():
     """Scrape og:image for existing articles that have no image. Accepts ?batch=N (default 100)."""

@@ -32,6 +32,14 @@ REGION_KEYWORDS = {
         "japan", "\\bboj\\b", "bank of japan", "\\byen\\b", "tokyo", "nikkei",
         "ueda", "yield curve control",
     ],
+    "Korea": [
+        "korea", "korean", "\\bbok\\b", "bank of korea", "seoul", "kospi",
+        "\\bwon\\b", "samsung", "hyundai", "sk hynix",
+    ],
+    "India": [
+        "india", "indian", "\\brbi\\b", "reserve bank of india", "mumbai",
+        "\\brupee\\b", "\\binr\\b", "sensex", "nifty", "modi", "new delhi",
+    ],
 }
 
 # Asset classes required by AC: Equities, Bonds, FX, Commodities
@@ -53,6 +61,15 @@ ASSET_KEYWORDS = {
     "Commodities": [
         "\\boil\\b", "crude", "brent", "gold", "silver", "copper", "commodity",
         "commodities", "iron ore", "natural gas", "opec", "metals",
+    ],
+    "Crypto": [
+        "crypto", "cryptocurrency", "bitcoin", "\\bbtc\\b", "ethereum", "\\beth\\b",
+        "blockchain", "defi", "stablecoin", "binance", "coinbase", "web3",
+    ],
+    "Real Estate": [
+        "real estate", "property market", "housing market", "\\breit\\b",
+        "mortgage", "home prices", "commercial property", "residential property",
+        "property prices", "home sales",
     ],
 }
 
