@@ -5,6 +5,7 @@ import RegionsMarketsBox from './RegionsMarketsBox'
 import DateTimeline from './DateTimeline'
 import ArticleHero from './ArticleHero'
 import ArticleCard from './ArticleCard'
+import CausalChain from './CausalChain'
 
 function buildArticlesByDate(articles) {
   const map = {}
@@ -137,20 +138,9 @@ function ThemeDetailPanel({ theme }) {
               )}
             </div>
 
-            {/* Causal Chain column (placeholder) */}
-            <div className="w-[320px] min-w-[320px] space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-                Causal Chain
-              </h3>
-              <div className="rounded-lg bg-[#1e293b] p-4">
-                {themeData.causal_chain ? (
-                  <p className="text-sm text-slate-300 whitespace-pre-wrap">{themeData.causal_chain}</p>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    Causal chain analysis will appear here once generated.
-                  </p>
-                )}
-              </div>
+            {/* Causal Chain column */}
+            <div className="w-[320px] min-w-[320px]">
+              <CausalChain chain={themeData.causal_chain} />
             </div>
           </div>
         </>
