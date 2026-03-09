@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import TemperatureBadge from './TemperatureBadge'
 
 const ACCENT_HEX = {
@@ -9,6 +9,7 @@ const ACCENT_HEX = {
 
 function ThemeBanner({ theme, showLink = true }) {
   const accent = ACCENT_HEX[theme.score_label?.toLowerCase()] || '#06b6d4'
+  const navigate = useNavigate()
 
   return (
     <div
@@ -23,13 +24,20 @@ function ThemeBanner({ theme, showLink = true }) {
           )}
         </div>
         <div className="flex items-center gap-3">
-          {showLink && theme.slug && (
+          {showLink && theme.slug ? (
             <Link
               to={`/theme/${theme.slug}`}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 rounded-full px-3 py-1 transition-colors"
             >
-              Open full view
+              Full View <span className="text-[10px]">↗</span>
             </Link>
+          ) : (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 rounded-full px-3 py-1 transition-colors"
+            >
+              <span className="text-[10px]">↙</span> Close View
+            </button>
           )}
           <TemperatureBadge label={theme.score_label} />
         </div>
