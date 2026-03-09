@@ -315,10 +315,18 @@ def aggregate_theme_tags():
 
 
 def run_clustering():
-    """Full clustering pipeline: classify, score, tag, snapshot, cache."""
+    """Full clustering pipeline: classify, score, tag, causal chains, snapshot, cache."""
     assigned = cluster_articles()
     calculate_temperatures()
     aggregate_theme_tags()
+
+    # Generate causal chains for hot themes
+    try:
+        from app.services.causal_chain import generate_chains_for_hot_themes
+        generate_chains_for_hot_themes()
+    except Exception as e:
+        logger.error(f"Causal chain generation error: {e}")
+
     snapshot_themes()
     themes = cache_themes()
 
