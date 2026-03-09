@@ -6,12 +6,13 @@ function formatDateLabel(dateStr) {
 }
 
 function getHeatLevel(count, maxCount) {
-  if (maxCount === 0) return 'cold'
+  if (maxCount === 0 || count === 0) return 'cold'
   const ratio = count / maxCount
-  if (ratio >= 0.8) return 'critical'
-  if (ratio >= 0.6) return 'high'
-  if (ratio >= 0.35) return 'medium'
-  if (ratio >= 0.15) return 'low'
+
+  if (ratio >= 0.8 && count >= 6) return 'critical'
+  if (ratio >= 0.6 && count >= 4) return 'high'
+  if (ratio >= 0.35 && count >= 2) return 'medium'
+  if (count >= 2) return 'low'
   return 'cold'
 }
 
