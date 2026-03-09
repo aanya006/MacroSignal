@@ -1,10 +1,29 @@
-function formatDate(dateStr) {
+function formatDateTime(dateStr) {
   if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('en-SG', {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const isToday = date.toDateString() === now.toDateString()
+
+  if (isToday) {
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    const diffHours = Math.floor(diffMins / 60)
+    return `${diffHours}h ago`
+  }
+
+  const datePart = date.toLocaleDateString('en-SG', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
+  const timePart = date.toLocaleTimeString('en-SG', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return `${datePart}, ${timePart}`
 }
 
 function ArticleHero({ article }) {
@@ -29,7 +48,7 @@ function ArticleHero({ article }) {
         <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
           <span className="font-medium text-slate-300">{article.source_name}</span>
           <span aria-hidden="true">·</span>
-          <time dateTime={article.published_at}>{formatDate(article.published_at)}</time>
+          <time dateTime={article.published_at}>{formatDateTime(article.published_at)}</time>
         </div>
       </div>
     </a>

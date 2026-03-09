@@ -177,6 +177,92 @@
 
   /* Footer */
   .footer { height: 32px; background: #0c1322; border-top: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 11px; color: #475569; flex-shrink: 0; }
+
+  /* Memory Search — two-column split layout */
+  .memory-search-view { display: none; flex: 1; overflow: hidden; }
+  .memory-search-view.active { display: flex; }
+  .live-view { display: flex; flex: 1; overflow: hidden; }
+  .live-view.hidden { display: none; }
+
+  /* Left column: search + results list */
+  .memory-left { width: 380px; min-width: 380px; border-right: 1px solid #1e293b; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; background: #0c1322; }
+  .memory-left::-webkit-scrollbar { width: 4px; }
+  .memory-left::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+  .memory-search-title { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 2px; }
+  .memory-search-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+
+  .memory-search-bar { display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 0 12px; margin-bottom: 10px; transition: border-color 0.15s; }
+  .memory-search-bar:focus-within { border-color: #3b82f6; }
+  .memory-search-icon { font-size: 13px; color: #64748b; margin-right: 8px; }
+  .memory-search-input { flex: 1; background: none; border: none; outline: none; color: #f1f5f9; font-size: 13px; padding: 10px 0; font-family: inherit; }
+  .memory-search-input::placeholder { color: #475569; }
+
+  .memory-quick-filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .memory-quick-label { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 2px; }
+  .memory-quick-chip { padding: 3px 10px; border-radius: 6px; font-size: 11px; color: #94a3b8; background: #1e293b; border: 1px solid #334155; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .memory-quick-chip:hover { background: #253348; color: #e2e8f0; border-color: #475569; }
+  .memory-quick-chip.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+
+  .memory-refine-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .memory-refine-label { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .memory-date-input { background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; color: #94a3b8; font-size: 11px; font-family: inherit; outline: none; transition: border-color 0.15s; width: 110px; }
+  .memory-date-input:focus { border-color: #3b82f6; }
+
+  .memory-results-header { font-size: 11px; color: #64748b; margin-bottom: 10px; }
+  .memory-results-header span { color: #f1f5f9; font-weight: 600; }
+
+  .memory-results { display: flex; flex-direction: column; gap: 6px; }
+
+  .memory-result-card { background: #1e293b; border-radius: 8px; padding: 12px 14px; border: 1px solid transparent; cursor: pointer; transition: all 0.15s; }
+  .memory-result-card:hover { background: #253348; border-color: #334155; }
+  .memory-result-card.selected { border-color: #8b5cf6; background: #1a1525; }
+  .memory-result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .memory-result-name { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .memory-result-meta { font-size: 11px; color: #64748b; margin-bottom: 0; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .memory-result-meta-sep { color: #334155; }
+  .memory-result-peak { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 1px 6px; border-radius: 4px; }
+  .memory-result-peak.hot { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+  .memory-result-peak.warm { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+  .memory-result-peak.cool { background: rgba(6, 182, 212, 0.1); color: #06b6d4; }
+  .memory-result-desc { display: none; }
+  .memory-result-trigger { display: none; }
+
+  .memory-empty { text-align: center; padding: 32px 0; }
+  .memory-empty-text { font-size: 13px; color: #64748b; margin-bottom: 6px; }
+  .memory-empty-hint { font-size: 11px; color: #475569; }
+
+  /* Right column: expanded detail panel */
+  .memory-detail { flex: 1; overflow-y: auto; background: #0f172a; padding: 24px 28px; }
+  .memory-detail::-webkit-scrollbar { width: 6px; }
+  .memory-detail::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+  .memory-detail-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #475569; font-size: 13px; }
+
+  .memory-detail-banner { margin-bottom: 20px; }
+  .memory-detail-title { font-size: 24px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .memory-detail-subtitle { font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .memory-detail-subtitle .memory-result-peak { margin: 0 2px; }
+
+  .memory-detail-desc { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #1e293b; }
+
+  /* Backward-looking causal chain */
+  .memory-what-happened { margin-bottom: 20px; }
+  .memory-wh-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: #8b5cf6; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .memory-wh-icon { width: 20px; height: 20px; border-radius: 4px; background: rgba(139, 92, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #8b5cf6; font-weight: 700; }
+
+  .memory-outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .memory-outcome-card { background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; }
+  .memory-outcome-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .memory-outcome-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; }
+  .memory-outcome-change { font-size: 12px; font-weight: 700; }
+  .memory-outcome-change.positive { color: #22c55e; }
+  .memory-outcome-change.negative { color: #ef4444; }
+  .memory-outcome-change.flat { color: #64748b; }
+  .memory-outcome-text { font-size: 12px; color: #cbd5e1; line-height: 1.4; }
+
+  .memory-detail-link { display: inline-block; margin-top: 16px; font-size: 12px; color: #3b82f6; text-decoration: none; }
+  .memory-detail-link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -185,8 +271,8 @@
 <div class="header">
   <div class="logo"><span>MACRO</span> Intelligence</div>
   <div class="tabs">
-    <button class="tab active">Live Themes</button>
-    <button class="tab">Memory Search</button>
+    <button class="tab active" onclick="switchTab('live')">Live Themes</button>
+    <button class="tab" onclick="switchTab('memory')">Memory Search</button>
   </div>
   <div class="status">
     <span class="status-dot"></span>
@@ -196,6 +282,440 @@
 
 <!-- Main -->
 <div class="main">
+
+  <!-- Memory Search View (two-column split) -->
+  <div class="memory-search-view" id="memoryView">
+
+    <!-- Left: Search + Result Cards -->
+    <div class="memory-left">
+      <div class="memory-search-title">Institutional Memory</div>
+      <div class="memory-search-subtitle">Search historical themes and discover what happened before.</div>
+
+      <div class="memory-search-bar">
+        <span class="memory-search-icon">&#128269;</span>
+        <input class="memory-search-input" type="text" placeholder="Search institutional memory..." id="memoryInput" oninput="filterMemory()" />
+      </div>
+
+      <div class="memory-quick-filters">
+        <span class="memory-quick-label">Quick:</span>
+        <button class="memory-quick-chip" onclick="quickFilter(this, 'Fed Rate')">Fed Rate</button>
+        <button class="memory-quick-chip" onclick="quickFilter(this, 'MAS Policy')">MAS Policy</button>
+        <button class="memory-quick-chip" onclick="quickFilter(this, 'China')">China</button>
+        <button class="memory-quick-chip" onclick="quickFilter(this, 'Oil')">Oil</button>
+        <button class="memory-quick-chip" onclick="quickFilter(this, 'FX')">FX</button>
+      </div>
+
+      <div class="memory-refine-row">
+        <span class="memory-refine-label">Refine:</span>
+        <span style="font-size: 11px; color: #64748b;">From</span>
+        <input class="memory-date-input" type="month" />
+        <span style="font-size: 11px; color: #64748b;">To</span>
+        <input class="memory-date-input" type="month" />
+      </div>
+
+      <!-- Default state -->
+      <div class="memory-empty" id="memoryEmpty">
+        <div class="memory-empty-text">Search historical themes by keyword.</div>
+        <div class="memory-empty-hint">Try "inflation", "Fed rate", "MAS tightening", or "China property".</div>
+      </div>
+
+      <!-- Results list -->
+      <div id="memoryResultsSection" style="display: none;">
+        <div class="memory-results-header" id="memoryResultsHeader">3 results for <span>"MAS"</span></div>
+        <div class="memory-results" id="memoryResults">
+
+          <div class="memory-result-card selected" data-keywords="mas tightening policy monetary sgd neer" data-detail="mas-tightening" onclick="selectMemoryCard(this, 'mas-tightening')">
+            <div class="memory-result-row">
+              <span class="memory-result-name">MAS Monetary Policy Tightening</span>
+              <span class="badge badge-hot">Hot</span>
+            </div>
+            <div class="memory-result-meta">
+              <span>Oct — Dec 2024</span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>Peak: <span class="memory-result-peak hot">Hot</span></span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>12 articles</span>
+            </div>
+          </div>
+
+          <div class="memory-result-card" data-keywords="mas policy statement october sgd tightening" data-detail="mas-oct-2024" onclick="selectMemoryCard(this, 'mas-oct-2024')">
+            <div class="memory-result-row">
+              <span class="memory-result-name">MAS Oct 2024 Policy Statement</span>
+              <span class="badge badge-warming">Warm</span>
+            </div>
+            <div class="memory-result-meta">
+              <span>Sep — Nov 2024</span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>Peak: <span class="memory-result-peak warm">Warm</span></span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>8 articles</span>
+            </div>
+          </div>
+
+          <div class="memory-result-card" data-keywords="fed rate pivot interest cuts federal reserve powell" data-detail="fed-pivot" onclick="selectMemoryCard(this, 'fed-pivot')">
+            <div class="memory-result-row">
+              <span class="memory-result-name">Fed Rate Pivot 2024</span>
+              <span class="badge badge-hot">Hot</span>
+            </div>
+            <div class="memory-result-meta">
+              <span>Jun — Sep 2024</span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>Peak: <span class="memory-result-peak hot">Hot</span></span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>15 articles</span>
+            </div>
+          </div>
+
+          <div class="memory-result-card" data-keywords="china property crisis evergrande housing real estate" data-detail="china-property" onclick="selectMemoryCard(this, 'china-property')">
+            <div class="memory-result-row">
+              <span class="memory-result-name">China Property Crisis 2024</span>
+              <span class="badge badge-hot">Hot</span>
+            </div>
+            <div class="memory-result-meta">
+              <span>Jan — Jun 2024</span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>Peak: <span class="memory-result-peak hot">Hot</span></span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>11 articles</span>
+            </div>
+          </div>
+
+          <div class="memory-result-card" data-keywords="japan ycc yield curve control boj yen" data-detail="japan-ycc" onclick="selectMemoryCard(this, 'japan-ycc')">
+            <div class="memory-result-row">
+              <span class="memory-result-name">Japan YCC End 2024</span>
+              <span class="badge badge-warming">Warm</span>
+            </div>
+            <div class="memory-result-meta">
+              <span>Feb — Apr 2024</span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>Peak: <span class="memory-result-peak warm">Warm</span></span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>6 articles</span>
+            </div>
+          </div>
+
+          <div class="memory-result-card" data-keywords="us china tech decoupling semiconductor chips oil fx" data-detail="us-china-tech" onclick="selectMemoryCard(this, 'us-china-tech')">
+            <div class="memory-result-row">
+              <span class="memory-result-name">US-China Tech Decoupling 2024</span>
+              <span class="badge badge-warming">Warm</span>
+            </div>
+            <div class="memory-result-meta">
+              <span>Mar — Jul 2024</span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>Peak: <span class="memory-result-peak warm">Warm</span></span>
+              <span class="memory-result-meta-sep">·</span>
+              <span>9 articles</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- No results -->
+      <div class="memory-empty" id="memoryNoResults" style="display: none;">
+        <div class="memory-empty-text">No matching historical themes found.</div>
+        <div class="memory-empty-hint">Try different keywords like "inflation", "Fed rate", or "China property".</div>
+      </div>
+    </div>
+
+    <!-- Right: Expanded Detail Panel (mirrors Live Themes layout) -->
+    <div class="memory-detail" id="memoryDetail">
+      <div class="memory-detail-empty" id="memoryDetailEmpty">
+        <p>Select a historical theme to view what happened.</p>
+      </div>
+
+      <!-- MAS Tightening Detail -->
+      <div class="memory-detail-content" id="detail-mas-tightening" style="display: none;">
+        <div class="theme-banner">
+          <div class="theme-banner-bg" style="background: linear-gradient(135deg, #2d1f1f 0%, #3d1a2a 50%, #1a2744 100%);"></div>
+          <div class="theme-banner-overlay"></div>
+          <div class="theme-banner-content">
+            <div class="theme-banner-title">MAS Monetary Policy Tightening <span class="badge badge-hot badge-lg">Hot</span></div>
+          </div>
+        </div>
+        <div class="tags-row">
+          <span class="tag">Singapore</span><span class="tag">ASEAN</span><span class="tag">FX</span><span class="tag">Equities</span><span class="tag">Bonds</span>
+          <span style="margin-left: auto; font-size: 11px; color: #64748b;">Oct 2024 — Dec 2024 · 12 articles</span>
+        </div>
+        <div class="detail-columns">
+          <div class="detail-col-left">
+            <div class="section-title">Archived Articles</div>
+            <div class="hero-article">
+              <div class="hero-article-img"><div class="hero-article-img-placeholder">Article hero image</div></div>
+              <div class="hero-article-content">
+                <div class="hero-article-title">MAS surprises with S$NEER slope steepening amid inflation concerns</div>
+                <div class="hero-article-meta">Channel News Asia · Oct 14, 2024</div>
+                <div class="hero-article-summary">MAS steepened the S$NEER policy band slope in its semi-annual review, surprising markets that expected a pause given global growth concerns.</div>
+              </div>
+            </div>
+            <div class="article-card"><div class="article-thumb">BT</div><div class="article-content"><div class="article-title">Singapore exporters brace for stronger SGD impact on margins</div><div class="article-meta">Business Times · Oct 15, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">R</div><div class="article-content"><div class="article-title">MAS policy divergence from regional central banks widens to record</div><div class="article-meta">Reuters · Oct 16, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">BBG</div><div class="article-content"><div class="article-title">SGD appreciation accelerates against ASEAN currencies post-MAS</div><div class="article-meta">Bloomberg · Oct 18, 2024</div></div></div>
+          </div>
+          <div class="detail-col-right">
+            <div class="memory-wh-title"><div class="memory-wh-icon">H</div> What Happened</div>
+            <div class="causal-chain">
+              <div class="causal-step trigger"><div class="causal-step-label">Trigger</div><div class="causal-step-text">MAS steepened S$NEER slope in Oct 2024 semi-annual review, surprising markets expecting a pause.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+              <div class="causal-step mechanism"><div class="causal-step-label">Mechanism</div><div class="causal-step-text">SGD appreciated 2.1% against USD over 6 weeks, tightening financial conditions for Singapore exporters.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+            </div>
+            <div class="section-title" style="margin-top: 4px; margin-bottom: 10px; color: #8b5cf6;">Outcome</div>
+            <div class="memory-outcome-grid">
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Equities</span><span class="memory-outcome-change negative">&#9660; -4.3%</span></div><div class="memory-outcome-text">STI industrials declined over 8 weeks as export margins compressed</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Bonds</span><span class="memory-outcome-change positive">&#9650; +1.2%</span></div><div class="memory-outcome-text">SGS 10Y demand rose as foreign holders sought SGD-denominated safe assets</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">FX</span><span class="memory-outcome-change positive">&#9650; +2.1%</span></div><div class="memory-outcome-text">SGD strengthened against MYR, IDR, and THB over 6-week period</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Commodities</span><span class="memory-outcome-change flat">&#8212; 0%</span></div><div class="memory-outcome-text">No material impact observed on commodity positioning</div></div>
+            </div>
+            <div class="ai-disclaimer" style="margin-top: 14px;"><span class="ai-badge">AI-Generated</span> Historical analysis — not financial advice.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fed Rate Pivot Detail -->
+      <div class="memory-detail-content" id="detail-fed-pivot" style="display: none;">
+        <div class="theme-banner">
+          <div class="theme-banner-bg" style="background: linear-gradient(135deg, #1a2744 0%, #1f2d44 50%, #2d1f3d 100%);"></div>
+          <div class="theme-banner-overlay"></div>
+          <div class="theme-banner-content">
+            <div class="theme-banner-title">Fed Rate Pivot 2024 <span class="badge badge-hot badge-lg">Hot</span></div>
+          </div>
+        </div>
+        <div class="tags-row">
+          <span class="tag">US</span><span class="tag">Equities</span><span class="tag">Bonds</span><span class="tag">FX</span><span class="tag">Commodities</span>
+          <span style="margin-left: auto; font-size: 11px; color: #64748b;">Jun — Sep 2024 · 15 articles</span>
+        </div>
+        <div class="detail-columns">
+          <div class="detail-col-left">
+            <div class="section-title">Archived Articles</div>
+            <div class="hero-article">
+              <div class="hero-article-img"><div class="hero-article-img-placeholder">Article hero image</div></div>
+              <div class="hero-article-content">
+                <div class="hero-article-title">Powell signals rate cuts ahead at Jackson Hole, markets rally</div>
+                <div class="hero-article-meta">Reuters · Aug 23, 2024</div>
+                <div class="hero-article-summary">Fed Chair Powell acknowledged cooling inflation and signaled the first rate cut cycle since 2020, triggering a broad risk-on rally across global markets.</div>
+              </div>
+            </div>
+            <div class="article-card"><div class="article-thumb">WSJ</div><div class="article-content"><div class="article-title">Treasury yields plunge as markets price in aggressive Fed easing</div><div class="article-meta">Wall Street Journal · Aug 24, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">BBG</div><div class="article-content"><div class="article-title">EM currencies rally on USD weakness as Fed pivot confirmed</div><div class="article-meta">Bloomberg · Aug 26, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">FT</div><div class="article-content"><div class="article-title">Gold surges to record as real rates decline on Fed dovish shift</div><div class="article-meta">Financial Times · Sep 2, 2024</div></div></div>
+          </div>
+          <div class="detail-col-right">
+            <div class="memory-wh-title"><div class="memory-wh-icon">H</div> What Happened</div>
+            <div class="causal-chain">
+              <div class="causal-step trigger"><div class="causal-step-label">Trigger</div><div class="causal-step-text">Powell pivoted to dovish guidance at Jackson Hole Aug 2024, signaling rate cuts were imminent.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+              <div class="causal-step mechanism"><div class="causal-step-label">Mechanism</div><div class="causal-step-text">Treasury yields fell 80bps over 8 weeks. USD weakened broadly, relieving pressure on EM and Asian currencies.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+            </div>
+            <div class="section-title" style="margin-top: 4px; margin-bottom: 10px; color: #8b5cf6;">Outcome</div>
+            <div class="memory-outcome-grid">
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Equities</span><span class="memory-outcome-change positive">&#9650; +7.2%</span></div><div class="memory-outcome-text">S&P 500 rallied to all-time highs; ASEAN equities gained 4-6%</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Bonds</span><span class="memory-outcome-change positive">&#9650; +3.8%</span></div><div class="memory-outcome-text">10Y Treasury yields dropped from 4.5% to 3.7%; bond prices rallied</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">FX</span><span class="memory-outcome-change negative">&#9660; -4.1%</span></div><div class="memory-outcome-text">DXY fell sharply; SGD, MYR, IDR all strengthened against USD</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Commodities</span><span class="memory-outcome-change positive">&#9650; +5.3%</span></div><div class="memory-outcome-text">Gold hit record highs on weaker USD; oil stabilized on demand optimism</div></div>
+            </div>
+            <div class="ai-disclaimer" style="margin-top: 14px;"><span class="ai-badge">AI-Generated</span> Historical analysis — not financial advice.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- China Property Detail -->
+      <div class="memory-detail-content" id="detail-china-property" style="display: none;">
+        <div class="theme-banner">
+          <div class="theme-banner-bg" style="background: linear-gradient(135deg, #2d2020 0%, #3d1a1a 50%, #1a2744 100%);"></div>
+          <div class="theme-banner-overlay"></div>
+          <div class="theme-banner-content">
+            <div class="theme-banner-title">China Property Crisis 2024 <span class="badge badge-hot badge-lg">Hot</span></div>
+          </div>
+        </div>
+        <div class="tags-row">
+          <span class="tag">China</span><span class="tag">ASEAN</span><span class="tag">Equities</span><span class="tag">Bonds</span><span class="tag">Commodities</span>
+          <span style="margin-left: auto; font-size: 11px; color: #64748b;">Jan — Jun 2024 · 11 articles</span>
+        </div>
+        <div class="detail-columns">
+          <div class="detail-col-left">
+            <div class="section-title">Archived Articles</div>
+            <div class="hero-article">
+              <div class="hero-article-img"><div class="hero-article-img-placeholder">Article hero image</div></div>
+              <div class="hero-article-content">
+                <div class="hero-article-title">Country Garden misses bond payments, triggering fresh contagion fears</div>
+                <div class="hero-article-meta">Reuters · Jan 12, 2024</div>
+                <div class="hero-article-summary">Country Garden failed to make coupon payments on two offshore bonds, reigniting fears of systemic risk in China's property sector.</div>
+              </div>
+            </div>
+            <div class="article-card"><div class="article-thumb">BBG</div><div class="article-content"><div class="article-title">PBOC cuts reserve ratio to support faltering property market</div><div class="article-meta">Bloomberg · Feb 5, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">SCMP</div><div class="article-content"><div class="article-title">Iron ore prices slide on weak China construction demand outlook</div><div class="article-meta">South China Morning Post · Mar 8, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">CNA</div><div class="article-content"><div class="article-title">Singapore REITs with China exposure face growing headwinds</div><div class="article-meta">Channel News Asia · Apr 2, 2024</div></div></div>
+          </div>
+          <div class="detail-col-right">
+            <div class="memory-wh-title"><div class="memory-wh-icon">H</div> What Happened</div>
+            <div class="causal-chain">
+              <div class="causal-step trigger"><div class="causal-step-label">Trigger</div><div class="causal-step-text">Country Garden missed bond payments in early 2024, triggering fresh contagion fears across China's property sector.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+              <div class="causal-step mechanism"><div class="causal-step-label">Mechanism</div><div class="causal-step-text">Property investment fell 9.8% YoY. Local government land revenues collapsed, forcing PBOC into targeted RRR cuts.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+            </div>
+            <div class="section-title" style="margin-top: 4px; margin-bottom: 10px; color: #8b5cf6;">Outcome</div>
+            <div class="memory-outcome-grid">
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Equities</span><span class="memory-outcome-change negative">&#9660; -12.4%</span></div><div class="memory-outcome-text">Hang Seng Property Index fell sharply; SG REITs with China exposure -6%</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Bonds</span><span class="memory-outcome-change negative">&#9660; -8.2%</span></div><div class="memory-outcome-text">China HY spreads widened 200bps; developer bonds at distressed levels</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">FX</span><span class="memory-outcome-change negative">&#9660; -3.1%</span></div><div class="memory-outcome-text">CNY weakened past 7.25/USD; PBOC set stronger fixings</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Commodities</span><span class="memory-outcome-change negative">&#9660; -15.7%</span></div><div class="memory-outcome-text">Iron ore fell to $95/t; copper dropped on weak construction demand</div></div>
+            </div>
+            <div class="ai-disclaimer" style="margin-top: 14px;"><span class="ai-badge">AI-Generated</span> Historical analysis — not financial advice.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAS Oct 2024 Detail -->
+      <div class="memory-detail-content" id="detail-mas-oct-2024" style="display: none;">
+        <div class="theme-banner">
+          <div class="theme-banner-bg"></div>
+          <div class="theme-banner-overlay"></div>
+          <div class="theme-banner-content">
+            <div class="theme-banner-title">MAS Oct 2024 Policy Statement <span class="badge badge-warming badge-lg">Warm</span></div>
+          </div>
+        </div>
+        <div class="tags-row">
+          <span class="tag">Singapore</span><span class="tag">FX</span><span class="tag">Bonds</span>
+          <span style="margin-left: auto; font-size: 11px; color: #64748b;">Sep — Nov 2024 · 8 articles</span>
+        </div>
+        <div class="detail-columns">
+          <div class="detail-col-left">
+            <div class="section-title">Archived Articles</div>
+            <div class="hero-article">
+              <div class="hero-article-img"><div class="hero-article-img-placeholder">Article hero image</div></div>
+              <div class="hero-article-content">
+                <div class="hero-article-title">MAS holds steady in October policy review, in line with expectations</div>
+                <div class="hero-article-meta">Business Times · Oct 14, 2024</div>
+                <div class="hero-article-summary">MAS maintained S$NEER policy band parameters in its semi-annual review, matching consensus forecasts. Focus shifts to inflation guidance.</div>
+              </div>
+            </div>
+            <div class="article-card"><div class="article-thumb">CNA</div><div class="article-content"><div class="article-title">Analysts: MAS decision a non-event for markets, watch forward guidance</div><div class="article-meta">Channel News Asia · Oct 14, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">R</div><div class="article-content"><div class="article-title">SGD stable after MAS decision; traders shift focus to US election</div><div class="article-meta">Reuters · Oct 15, 2024</div></div></div>
+          </div>
+          <div class="detail-col-right">
+            <div class="memory-wh-title"><div class="memory-wh-icon">H</div> What Happened</div>
+            <div class="causal-chain">
+              <div class="causal-step trigger"><div class="causal-step-label">Trigger</div><div class="causal-step-text">MAS maintained existing S$NEER parameters in Oct 2024, in line with consensus expectations.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+              <div class="causal-step mechanism"><div class="causal-step-label">Mechanism</div><div class="causal-step-text">Markets well-positioned for status quo. SGD remained stable. Attention shifted to forward guidance on inflation.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+            </div>
+            <div class="section-title" style="margin-top: 4px; margin-bottom: 10px; color: #8b5cf6;">Outcome</div>
+            <div class="memory-outcome-grid">
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Equities</span><span class="memory-outcome-change flat">&#8212; 0%</span></div><div class="memory-outcome-text">STI unchanged on the day; no sector rotation triggered</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Bonds</span><span class="memory-outcome-change flat">&#8212; 0%</span></div><div class="memory-outcome-text">SGS yields held steady; no repricing in the short end</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">FX</span><span class="memory-outcome-change positive">&#9650; +0.2%</span></div><div class="memory-outcome-text">Marginal SGD strength on confirmation of tight stance</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Commodities</span><span class="memory-outcome-change flat">&#8212; 0%</span></div><div class="memory-outcome-text">No impact on commodity markets from MAS decision</div></div>
+            </div>
+            <div class="ai-disclaimer" style="margin-top: 14px;"><span class="ai-badge">AI-Generated</span> Historical analysis — not financial advice.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Japan YCC Detail -->
+      <div class="memory-detail-content" id="detail-japan-ycc" style="display: none;">
+        <div class="theme-banner">
+          <div class="theme-banner-bg" style="background: linear-gradient(135deg, #1a2744 0%, #2d2040 50%, #1a3344 100%);"></div>
+          <div class="theme-banner-overlay"></div>
+          <div class="theme-banner-content">
+            <div class="theme-banner-title">Japan YCC End 2024 <span class="badge badge-warming badge-lg">Warm</span></div>
+          </div>
+        </div>
+        <div class="tags-row">
+          <span class="tag">Japan</span><span class="tag">Bonds</span><span class="tag">FX</span><span class="tag">Equities</span>
+          <span style="margin-left: auto; font-size: 11px; color: #64748b;">Feb — Apr 2024 · 6 articles</span>
+        </div>
+        <div class="detail-columns">
+          <div class="detail-col-left">
+            <div class="section-title">Archived Articles</div>
+            <div class="hero-article">
+              <div class="hero-article-img"><div class="hero-article-img-placeholder">Article hero image</div></div>
+              <div class="hero-article-content">
+                <div class="hero-article-title">BOJ ends yield curve control and negative rates in historic shift</div>
+                <div class="hero-article-meta">Nikkei Asia · Mar 19, 2024</div>
+                <div class="hero-article-summary">Bank of Japan formally abandoned its yield curve control framework and raised rates from -0.1% to 0-0.1%, ending 8 years of negative interest rate policy.</div>
+              </div>
+            </div>
+            <div class="article-card"><div class="article-thumb">FT</div><div class="article-content"><div class="article-title">Yen strengthens briefly on BOJ shift, but rate gap limits gains</div><div class="article-meta">Financial Times · Mar 20, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">BBG</div><div class="article-content"><div class="article-title">Nikkei rallies as weak yen continues to boost exporter earnings</div><div class="article-meta">Bloomberg · Mar 25, 2024</div></div></div>
+          </div>
+          <div class="detail-col-right">
+            <div class="memory-wh-title"><div class="memory-wh-icon">H</div> What Happened</div>
+            <div class="causal-chain">
+              <div class="causal-step trigger"><div class="causal-step-label">Trigger</div><div class="causal-step-text">BOJ ended YCC and raised rates from -0.1% to 0-0.1% in March 2024, ending 8 years of negative rates.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+              <div class="causal-step mechanism"><div class="causal-step-label">Mechanism</div><div class="causal-step-text">JGB 10Y yields rose to 0.75%. Yen strengthened briefly but rate differential with US remained wide.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+            </div>
+            <div class="section-title" style="margin-top: 4px; margin-bottom: 10px; color: #8b5cf6;">Outcome</div>
+            <div class="memory-outcome-grid">
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Equities</span><span class="memory-outcome-change positive">&#9650; +3.1%</span></div><div class="memory-outcome-text">Nikkei rallied on corporate governance reforms and weak yen</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Bonds</span><span class="memory-outcome-change negative">&#9660; -2.4%</span></div><div class="memory-outcome-text">JGB prices fell as yields normalized; global spillover muted</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">FX</span><span class="memory-outcome-change negative">&#9660; -1.8%</span></div><div class="memory-outcome-text">Yen strengthened 1.8% then reversed; JPY/USD returned above 150</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Commodities</span><span class="memory-outcome-change flat">&#8212; 0%</span></div><div class="memory-outcome-text">Minimal direct impact on global commodity markets</div></div>
+            </div>
+            <div class="ai-disclaimer" style="margin-top: 14px;"><span class="ai-badge">AI-Generated</span> Historical analysis — not financial advice.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- US-China Tech Detail -->
+      <div class="memory-detail-content" id="detail-us-china-tech" style="display: none;">
+        <div class="theme-banner">
+          <div class="theme-banner-bg" style="background: linear-gradient(135deg, #1a2744 0%, #1f3d2d 50%, #2d1f3d 100%);"></div>
+          <div class="theme-banner-overlay"></div>
+          <div class="theme-banner-content">
+            <div class="theme-banner-title">US-China Tech Decoupling 2024 <span class="badge badge-warming badge-lg">Warm</span></div>
+          </div>
+        </div>
+        <div class="tags-row">
+          <span class="tag">US</span><span class="tag">China</span><span class="tag">ASEAN</span><span class="tag">Equities</span><span class="tag">Commodities</span>
+          <span style="margin-left: auto; font-size: 11px; color: #64748b;">Mar — Jul 2024 · 9 articles</span>
+        </div>
+        <div class="detail-columns">
+          <div class="detail-col-left">
+            <div class="section-title">Archived Articles</div>
+            <div class="hero-article">
+              <div class="hero-article-img"><div class="hero-article-img-placeholder">Article hero image</div></div>
+              <div class="hero-article-content">
+                <div class="hero-article-title">US expands chip export restrictions to mature-node semiconductors</div>
+                <div class="hero-article-meta">Reuters · Mar 15, 2024</div>
+                <div class="hero-article-summary">Biden administration broadened semiconductor export controls to include mature-node chips, significantly expanding the scope of US-China tech decoupling.</div>
+              </div>
+            </div>
+            <div class="article-card"><div class="article-thumb">BBG</div><div class="article-content"><div class="article-title">ASEAN emerges as chip supply chain alternative amid US-China rift</div><div class="article-meta">Bloomberg · Apr 8, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">ST</div><div class="article-content"><div class="article-title">Malaysia and Vietnam attract record semiconductor FDI flows</div><div class="article-meta">Straits Times · May 12, 2024</div></div></div>
+            <div class="article-card"><div class="article-thumb">FT</div><div class="article-content"><div class="article-title">China accelerates domestic chip development in response to new controls</div><div class="article-meta">Financial Times · Jun 3, 2024</div></div></div>
+          </div>
+          <div class="detail-col-right">
+            <div class="memory-wh-title"><div class="memory-wh-icon">H</div> What Happened</div>
+            <div class="causal-chain">
+              <div class="causal-step trigger"><div class="causal-step-label">Trigger</div><div class="causal-step-text">US expanded chip export restrictions in Mar 2024 to include mature-node semiconductors.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+              <div class="causal-step mechanism"><div class="causal-step-label">Mechanism</div><div class="causal-step-text">China accelerated domestic chip development. ASEAN attracted diverted FDI as companies de-risked supply chains.</div></div>
+              <div class="causal-connector"><div class="causal-arrow"></div></div>
+            </div>
+            <div class="section-title" style="margin-top: 4px; margin-bottom: 10px; color: #8b5cf6;">Outcome</div>
+            <div class="memory-outcome-grid">
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Equities</span><span class="memory-outcome-change positive">&#9650; +8.5%</span></div><div class="memory-outcome-text">ASEAN tech/industrial stocks surged on supply chain relocation</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Bonds</span><span class="memory-outcome-change flat">&#8212; 0%</span></div><div class="memory-outcome-text">Limited impact on sovereign bond markets in the region</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">FX</span><span class="memory-outcome-change positive">&#9650; +1.4%</span></div><div class="memory-outcome-text">MYR and VND strengthened on FDI inflow expectations</div></div>
+              <div class="memory-outcome-card"><div class="memory-outcome-header"><span class="memory-outcome-name">Commodities</span><span class="memory-outcome-change negative">&#9660; -2.3%</span></div><div class="memory-outcome-text">Rare earth prices volatile on fears of Chinese export retaliation</div></div>
+            </div>
+            <div class="ai-disclaimer" style="margin-top: 14px;"><span class="ai-badge">AI-Generated</span> Historical analysis — not financial advice.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /memory-detail -->
+
+  </div><!-- /memory-search-view -->
+
+  <!-- Live Themes View -->
+  <div class="live-view" id="liveView">
 
   <!-- Feed Panel (Compact Dense) -->
   <div class="feed">
@@ -494,7 +1014,7 @@
         <div class="reading-suggestion">
           <div class="reading-suggestion-label">MAS Tightening Cycle — Q3 2024</div>
           <div class="reading-suggestion-text">Similar pattern detected: MAS tightening cycle Q3 2024 — SGD appreciated 2.1% against USD over 6 weeks. STI industrials declined 4.3% in the same period. ASEAN FX weakened 1.5-3% against SGD.</div>
-          <a class="reading-suggestion-link" href="#">View in Memory Search</a>
+          <a class="reading-suggestion-link" href="#" onclick="event.preventDefault(); switchTab('memory'); setTimeout(function(){ document.getElementById('memoryInput').value='MAS'; filterMemory(); }, 100);">View in Memory Search &rarr;</a>
         </div>
         </div>
 
@@ -503,7 +1023,9 @@
     </div>
   </div>
 
-</div>
+  </div><!-- /live-view -->
+
+</div><!-- /main -->
 
 <!-- Footer -->
 <div class="footer">
@@ -512,18 +1034,116 @@
 </div>
 
 <script>
+  // Tab switching
+  function switchTab(tab) {
+    const tabs = document.querySelectorAll('.tab');
+    const liveView = document.getElementById('liveView');
+    const memoryView = document.getElementById('memoryView');
+
+    tabs.forEach(t => t.classList.remove('active'));
+
+    if (tab === 'memory') {
+      tabs[1].classList.add('active');
+      liveView.classList.add('hidden');
+      memoryView.classList.add('active');
+      document.getElementById('memoryInput').focus();
+    } else {
+      tabs[0].classList.add('active');
+      liveView.classList.remove('hidden');
+      memoryView.classList.remove('active');
+    }
+  }
+
+  // Quick filter chips
+  function quickFilter(btn, keyword) {
+    document.querySelectorAll('.memory-quick-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('memoryInput').value = keyword;
+    filterMemory();
+  }
+
+  // Memory search filtering
+  function filterMemory() {
+    const query = document.getElementById('memoryInput').value.trim().toLowerCase();
+    const cards = document.querySelectorAll('.memory-result-card');
+    const resultsSection = document.getElementById('memoryResultsSection');
+    const emptyState = document.getElementById('memoryEmpty');
+    const noResults = document.getElementById('memoryNoResults');
+
+    if (!query || query.length < 2) {
+      resultsSection.style.display = 'none';
+      noResults.style.display = 'none';
+      emptyState.style.display = 'block';
+      clearMemoryDetail();
+      document.querySelectorAll('.memory-quick-chip').forEach(c => c.classList.remove('active'));
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    let matchCount = 0;
+    let firstMatch = null;
+
+    cards.forEach(card => {
+      const keywords = card.getAttribute('data-keywords') || '';
+      const name = card.querySelector('.memory-result-name').textContent.toLowerCase();
+      const searchable = keywords + ' ' + name;
+
+      if (searchable.includes(query)) {
+        card.style.display = 'block';
+        matchCount++;
+        if (!firstMatch) firstMatch = card;
+      } else {
+        card.style.display = 'none';
+        card.classList.remove('selected');
+      }
+    });
+
+    if (matchCount > 0) {
+      resultsSection.style.display = 'block';
+      noResults.style.display = 'none';
+      document.getElementById('memoryResultsHeader').innerHTML =
+        matchCount + ' result' + (matchCount !== 1 ? 's' : '') + ' for <span>"' + document.getElementById('memoryInput').value + '"</span>';
+      // Auto-select first result
+      if (firstMatch) {
+        selectMemoryCard(firstMatch, firstMatch.getAttribute('data-detail'));
+      }
+    } else {
+      resultsSection.style.display = 'none';
+      noResults.style.display = 'block';
+      clearMemoryDetail();
+    }
+  }
+
+  // Select a memory result card and show its detail
+  function selectMemoryCard(card, detailId) {
+    // Deselect all cards
+    document.querySelectorAll('.memory-result-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+
+    // Hide all detail panels
+    document.querySelectorAll('.memory-detail-content').forEach(d => d.style.display = 'none');
+    document.getElementById('memoryDetailEmpty').style.display = 'none';
+
+    // Show selected detail
+    const detail = document.getElementById('detail-' + detailId);
+    if (detail) detail.style.display = 'block';
+  }
+
+  // Clear detail panel
+  function clearMemoryDetail() {
+    document.querySelectorAll('.memory-detail-content').forEach(d => d.style.display = 'none');
+    document.getElementById('memoryDetailEmpty').style.display = 'flex';
+  }
+
   // Date Timeline interaction with fast-scroll animation
   function selectDate(node) {
     const allNodes = document.querySelectorAll('.date-node');
     const currentIdx = Array.from(allNodes).findIndex(n => n.classList.contains('selected'));
     const newIdx = Array.from(allNodes).indexOf(node);
 
-    // Remove previous selection
     allNodes.forEach(n => n.classList.remove('selected'));
     node.classList.add('selected');
 
-    // Animate article list with fast-scroll effect
-    // Index order is newest-first (left), so higher index = older date
     const articleList = document.getElementById('articleList');
     const direction = newIdx > currentIdx ? 'scrolling-down' : 'scrolling-up';
 
@@ -531,7 +1151,6 @@
 
     setTimeout(() => {
       articleList.classList.remove(direction);
-      // Update article section title with selected date
       const dateLabel = node.getAttribute('data-date');
       const count = node.getAttribute('data-count');
       const sectionTitle = document.querySelector('.detail-col-left .section-title:last-of-type');
