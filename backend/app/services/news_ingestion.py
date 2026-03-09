@@ -1,6 +1,8 @@
 import os
 import logging
+import re
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from urllib.parse import quote
 
@@ -29,6 +31,101 @@ PRIORITY_SOURCES = [
     "CNA", "Channel NewsAsia", "Business Times", "Straits Times",
     "Reuters", "Bloomberg", "MAS", "Nikkei Asia",
 ]
+
+
+_OG_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml",
+}
+
+_OG_PATTERNS = [
+    re.compile(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', re.IGNORECASE),
+    re.compile(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']', re.IGNORECASE),
+    re.compile(r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']', re.IGNORECASE),
+    re.compile(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+name=["\']twitter:image["\']', re.IGNORECASE),
+]
+
+
+def scrape_og_image(url):
+    """Fetch article URL and extract og:image / twitter:image meta tag."""
+    if not url:
+        return None
+    try:
+        resp = requests.get(url, headers=_OG_HEADERS, timeout=8, allow_redirects=True)
+        if resp.status_code != 200:
+            return None
+        # Only look in the first 20 KB — the <head> is always near the top
+        head_chunk = resp.text[:20000]
+        for pattern in _OG_PATTERNS:
+            m = pattern.search(head_chunk)
+            if m:
+                img = m.group(1).strip()
+                if img.startswith("http"):
+                    return img
+    except Exception:
+        pass
+    return None
+
+
+def enrich_with_og_images(articles, max_workers=6):
+    """Scrape og:image for articles that have no image_url, in parallel."""
+    to_scrape = [a for a in articles if not a.get("image_url")]
+    if not to_scrape:
+        return
+
+    logger.info(f"Scraping OG images for {len(to_scrape)} articles...")
+    fetched = 0
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(scrape_og_image, a["url"]): a for a in to_scrape}
+        for future in as_completed(futures):
+            article = futures[future]
+            try:
+                img = future.result()
+                if img:
+                    article["image_url"] = img
+                    fetched += 1
+            except Exception as e:
+                logger.debug(f"OG scrape error for {article.get('url', '')[:60]}: {e}")
+
+    logger.info(f"OG image scraping complete: {fetched}/{len(to_scrape)} found")
+
+
+def backfill_og_images(batch_size=100, max_workers=6):
+    """Scrape og:image for existing DB articles that have no image_url."""
+    rows = execute_query(
+        "SELECT id, url FROM articles WHERE image_url IS NULL OR image_url = '' ORDER BY published_at DESC LIMIT %s",
+        (batch_size,),
+    )
+    if not rows:
+        logger.info("backfill_og_images: no articles need backfilling")
+        return {"backfilled": 0, "total": 0}
+
+    logger.info(f"backfill_og_images: scraping {len(rows)} articles...")
+    updated = 0
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(scrape_og_image, row["url"]): row for row in rows}
+        for future in as_completed(futures):
+            row = futures[future]
+            try:
+                img = future.result()
+                if img:
+                    execute_query(
+                        "UPDATE articles SET image_url = %s WHERE id = %s AND (image_url IS NULL OR image_url = '')",
+                        (img, row["id"]),
+                        fetch=False,
+                    )
+                    updated += 1
+            except Exception as e:
+                logger.debug(f"backfill error for id={row['id']}: {e}")
+
+    logger.info(f"backfill_og_images: updated {updated}/{len(rows)}")
+    return {"backfilled": updated, "total": len(rows)}
 
 
 def is_relevant(article):
@@ -141,6 +238,88 @@ def fetch_from_google_rss():
     return all_articles
 
 
+_MEDIA_NS = "http://search.yahoo.com/mrss/"
+
+# Direct source RSS feeds — give real article URLs and often include images
+DIRECT_RSS_FEEDS = [
+    # CNA: real URLs + media:thumbnail images
+    ("CNA", "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6936"),
+    ("CNA", "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311"),
+    # CNBC: real URLs, og:image scrapable
+    ("CNBC", "https://www.cnbc.com/id/20910258/device/rss/rss.html"),
+    ("CNBC", "https://www.cnbc.com/id/10000664/device/rss/rss.html"),
+    # Yahoo Finance: real publisher URLs (WSJ, Bloomberg, etc.)
+    ("Yahoo Finance", "https://finance.yahoo.com/news/rssindex"),
+]
+
+
+def _parse_rss_date(pub_date):
+    if not pub_date:
+        return datetime.now(timezone.utc).isoformat()
+    for fmt in ("%a, %d %b %Y %H:%M:%S %Z", "%a, %d %b %Y %H:%M:%S %z"):
+        try:
+            return datetime.strptime(pub_date.strip(), fmt).replace(tzinfo=timezone.utc).isoformat()
+        except ValueError:
+            continue
+    return datetime.now(timezone.utc).isoformat()
+
+
+def fetch_from_direct_rss():
+    """Fetch articles from direct source RSS feeds with real URLs and images."""
+    all_articles = []
+
+    for feed_source, feed_url in DIRECT_RSS_FEEDS:
+        try:
+            resp = requests.get(feed_url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+            resp.raise_for_status()
+
+            root = ET.fromstring(resp.content)
+            channel = root.find("channel")
+            if channel is None:
+                continue
+
+            for item in channel.findall("item"):
+                title = item.findtext("title", "")
+                link = item.findtext("link", "")
+                pub_date = item.findtext("pubDate", "")
+                description = item.findtext("description", "")
+
+                # Try <source> sub-element for the actual publisher name
+                source_el = item.find("source")
+                source_name = source_el.text if source_el is not None and source_el.text else feed_source
+
+                # Extract image from <media:thumbnail> or <media:content>
+                image_url = ""
+                thumb = item.find(f"{{{_MEDIA_NS}}}thumbnail")
+                if thumb is not None:
+                    image_url = thumb.get("url", "")
+                if not image_url:
+                    content = item.find(f"{{{_MEDIA_NS}}}content")
+                    if content is not None:
+                        image_url = content.get("url", "")
+
+                if not link or not title:
+                    continue
+
+                all_articles.append({
+                    "title": title,
+                    "source_name": source_name,
+                    "url": link,
+                    "published_at": _parse_rss_date(pub_date),
+                    "full_text": description,
+                    "description": description,
+                    "image_url": image_url or None,
+                })
+
+        except requests.RequestException as e:
+            logger.error(f"Direct RSS error for {feed_url}: {e}")
+        except ET.ParseError as e:
+            logger.error(f"Direct RSS XML parse error for {feed_url}: {e}")
+
+    logger.info(f"Direct RSS returned {len(all_articles)} articles")
+    return all_articles
+
+
 def store_articles(articles):
     """Store articles in PostgreSQL, deduplicating by URL."""
     if not articles:
@@ -216,12 +395,22 @@ def run_ingestion():
         errors.append(f"Google RSS: {e}")
         logger.error(f"Google RSS unexpected error: {e}")
 
+    try:
+        direct_articles = fetch_from_direct_rss()
+        all_articles.extend(direct_articles)
+    except Exception as e:
+        errors.append(f"Direct RSS: {e}")
+        logger.error(f"Direct RSS unexpected error: {e}")
+
     total_fetched = len(all_articles)
     logger.info(f"Total articles fetched: {total_fetched}")
 
     # Filter by financial keywords
     filtered = [a for a in all_articles if is_relevant(a)]
     logger.info(f"Articles after keyword filter: {len(filtered)} (filtered out {total_fetched - len(filtered)})")
+
+    # Scrape OG images for articles that have none (e.g. Google RSS)
+    enrich_with_og_images(filtered)
 
     # Store in database
     articles_new = store_articles(filtered)

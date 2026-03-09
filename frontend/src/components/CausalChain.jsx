@@ -63,11 +63,11 @@ function CausalChain({ chain, historical }) {
     return (
       <div className="space-y-4">
         <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-slate-500">
-          Causal Chain
+          {historical ? 'What Happened' : 'Causal Chain'}
         </div>
         <div className="rounded-lg bg-[#1e293b] p-4">
           <p className="text-sm text-slate-500">
-            Causal analysis not yet available.
+            {historical ? 'Historical analysis not yet available.' : 'Causal analysis not yet available.'}
           </p>
         </div>
       </div>

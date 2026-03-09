@@ -1,5 +1,37 @@
 import { useState } from 'react'
 
+const SOURCE_DOMAINS = {
+  'Reuters': 'reuters.com',
+  'Bloomberg': 'bloomberg.com',
+  'Channel News Asia': 'channelnewsasia.com',
+  'CNA': 'channelnewsasia.com',
+  'The Business Times': 'businesstimes.com.sg',
+  'Business Times': 'businesstimes.com.sg',
+  'The Straits Times': 'straitstimes.com',
+  'Financial Times': 'ft.com',
+  'Wall Street Journal': 'wsj.com',
+  'South China Morning Post': 'scmp.com',
+  'Nikkei Asia': 'asia.nikkei.com',
+  'CNBC': 'cnbc.com',
+  'Forbes': 'forbes.com',
+  'Fortune': 'fortune.com',
+  'Yahoo Finance': 'finance.yahoo.com',
+  'mas.gov.sg': 'mas.gov.sg',
+  'European Central Bank': 'ecb.europa.eu',
+}
+
+function getSourceLogoUrl(sourceName, articleUrl) {
+  const knownDomain = SOURCE_DOMAINS[sourceName]
+  if (knownDomain) return `https://logo.clearbit.com/${knownDomain}`
+  try {
+    const u = new URL(articleUrl)
+    if (!u.hostname.includes('google.com') && !u.hostname.includes('historical-seed')) {
+      return `https://logo.clearbit.com/${u.hostname.replace(/^www\./, '')}`
+    }
+  } catch (_) {}
+  return null
+}
+
 function formatDateTime(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
@@ -30,9 +62,11 @@ function formatDateTime(dateStr) {
 
 function ArticleHero({ article }) {
   const [imgFailed, setImgFailed] = useState(false)
+  const [logoFailed, setLogoFailed] = useState(false)
   if (!article) return null
 
   const showImage = article.image_url && !imgFailed
+  const logoSrc = !showImage && !logoFailed ? getSourceLogoUrl(article.source_name, article.url) : null
 
   return (
     <a
@@ -48,9 +82,20 @@ function ArticleHero({ article }) {
           className="w-full h-[180px] object-cover"
           onError={() => setImgFailed(true)}
         />
+      ) : logoSrc ? (
+        <div className="w-full h-[180px] bg-[#0f172a] flex items-center justify-center">
+          <img
+            src={logoSrc}
+            alt={article.source_name}
+            className="max-h-16 max-w-[160px] object-contain"
+            onError={() => setLogoFailed(true)}
+          />
+        </div>
       ) : (
         <div className="w-full h-[180px] bg-gradient-to-br from-[#253348] via-[#1a2744] to-[#2d2040] flex items-center justify-center">
-          <span className="text-[13px] text-slate-600">Article hero image</span>
+          <span className="text-sm font-semibold text-slate-500">
+            {article.source_name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || '?'}
+          </span>
         </div>
       )}
       <div className="p-4">
