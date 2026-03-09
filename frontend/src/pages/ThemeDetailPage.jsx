@@ -8,6 +8,7 @@ import ArticleHero from '../components/ArticleHero'
 import ArticleCard from '../components/ArticleCard'
 import StatusBar from '../components/StatusBar'
 import CausalChain from '../components/CausalChain'
+import HistoricalParallel from '../components/HistoricalParallel'
 
 function buildArticlesByDate(articles) {
   const map = {}
@@ -133,6 +134,7 @@ function ThemeDetailPage() {
               {/* Causal Chain column */}
               <div className="w-[320px] min-w-[320px]">
                 <CausalChain chain={theme.causal_chain} />
+                <HistoricalParallel theme={theme} />
               </div>
             </div>
           </>

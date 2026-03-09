@@ -2,6 +2,7 @@
 
 Run once: python seed_history.py
 """
+import json
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -15,6 +16,16 @@ HISTORICAL_THEMES = [
         "description": "Federal Reserve began rate cutting cycle in September 2024 after holding rates at 5.25-5.50% for over a year.",
         "score_label": "cool",
         "score_value": 2.0,
+        "causal_chain": {
+            "trigger": "Federal Reserve cut rates by 50bps in September 2024, signaling end of tightening cycle after inflation cooled to 2.5%.",
+            "mechanism": "Lower US rates weakened the dollar, compressed yield spreads, and triggered global risk-on rotation into equities and EM assets.",
+            "impacts": {
+                "equities": {"direction": "positive", "summary": "S&P 500 rallied 8% in Q4 2024 as rate-sensitive sectors surged.", "change": "+8.2%"},
+                "bonds": {"direction": "positive", "summary": "US 10Y yield fell from 4.3% to 3.8% as curve steepened.", "change": "+4.1%"},
+                "fx": {"direction": "negative", "summary": "DXY weakened 3.5% as rate differential narrowed vs major currencies.", "change": "-3.5%"},
+                "commodities": {"direction": "positive", "summary": "Gold hit new highs above $2,700 on weaker dollar and lower real rates.", "change": "+6.8%"},
+            },
+        },
         "articles": [
             {
                 "title": "Fed Cuts Rates by 50bps in Surprise Move, First Cut Since 2020",
@@ -52,6 +63,16 @@ HISTORICAL_THEMES = [
         "description": "MAS maintained its monetary policy stance in October 2024, keeping the S$NEER band unchanged amid global rate cutting cycle.",
         "score_label": "cool",
         "score_value": 1.5,
+        "causal_chain": {
+            "trigger": "MAS held S$NEER policy band unchanged at October 2024 review as core inflation eased to 2.7%.",
+            "mechanism": "Steady SGD policy amid global easing kept Singapore's currency strong, supporting imported inflation control while compressing export margins.",
+            "impacts": {
+                "equities": {"direction": "neutral", "summary": "STI traded sideways as steady policy was fully priced in.", "change": "+0.3%"},
+                "bonds": {"direction": "positive", "summary": "SGS yields drifted lower tracking global bond rally.", "change": "+1.2%"},
+                "fx": {"direction": "positive", "summary": "SGD appreciated 1.4% vs USD as rate differential favored Singapore.", "change": "+1.4%"},
+                "commodities": {"direction": "neutral", "summary": "Limited direct impact on commodity markets.", "change": "+0.1%"},
+            },
+        },
         "articles": [
             {
                 "title": "MAS Keeps S$NEER Policy Band Unchanged at October Review",
@@ -82,6 +103,16 @@ HISTORICAL_THEMES = [
         "description": "China's prolonged property sector downturn deepened in 2024 with major developers defaulting and government stimulus failing to restore confidence.",
         "score_label": "cool",
         "score_value": 3.0,
+        "causal_chain": {
+            "trigger": "Evergrande liquidation order and Country Garden default triggered renewed contagion fears across China's property sector.",
+            "mechanism": "Developer defaults froze credit markets, slashed land sale revenues for local governments, and depressed consumer confidence through negative wealth effects.",
+            "impacts": {
+                "equities": {"direction": "negative", "summary": "HSI property sub-index fell 28% in 2024 despite stimulus packages.", "change": "-28.4%"},
+                "bonds": {"direction": "negative", "summary": "China HY spreads widened 350bps as developer bonds sold off.", "change": "-12.1%"},
+                "fx": {"direction": "negative", "summary": "CNY weakened to 7.30 vs USD on capital outflow pressures.", "change": "-4.2%"},
+                "commodities": {"direction": "negative", "summary": "Iron ore fell 18% on collapsing construction demand.", "change": "-18.3%"},
+            },
+        },
         "articles": [
             {
                 "title": "Evergrande Ordered to Liquidate by Hong Kong Court",
@@ -119,6 +150,16 @@ HISTORICAL_THEMES = [
         "description": "Bank of Japan ended negative interest rates and yield curve control in March 2024, the first rate hike since 2007.",
         "score_label": "cool",
         "score_value": 1.0,
+        "causal_chain": {
+            "trigger": "BOJ raised rates to 0-0.1% and abandoned YCC framework in March 2024 after 8 years of negative rates.",
+            "mechanism": "Historic policy shift was dovishly guided, limiting yen appreciation. Markets priced slow normalization, keeping carry trade attractive.",
+            "impacts": {
+                "equities": {"direction": "positive", "summary": "Nikkei 225 hit all-time high above 40,000 as weak yen boosted exporters.", "change": "+15.2%"},
+                "bonds": {"direction": "negative", "summary": "JGB 10Y yield rose to 1.1% as YCC ceiling was removed.", "change": "-3.8%"},
+                "fx": {"direction": "negative", "summary": "Yen weakened past 150/USD despite hike as guidance was dovish.", "change": "-7.1%"},
+                "commodities": {"direction": "neutral", "summary": "Minimal direct commodity impact from BOJ policy shift.", "change": "-0.2%"},
+            },
+        },
         "articles": [
             {
                 "title": "BOJ Ends Negative Rates, Raises Interest Rate for First Time Since 2007",
@@ -149,6 +190,16 @@ HISTORICAL_THEMES = [
         "description": "US expanded semiconductor export controls against China in 2024, accelerating tech supply chain fragmentation across Asia.",
         "score_label": "cool",
         "score_value": 2.5,
+        "causal_chain": {
+            "trigger": "US expanded AI chip export controls targeting NVIDIA H20 sales to China, broadening semiconductor restrictions.",
+            "mechanism": "Tighter controls fragmented Asia tech supply chains, forcing companies to dual-source and relocate manufacturing, while China accelerated domestic chip development.",
+            "impacts": {
+                "equities": {"direction": "negative", "summary": "Philadelphia Semiconductor Index fell 9% on revenue guidance cuts from China exposure.", "change": "-9.3%"},
+                "bonds": {"direction": "neutral", "summary": "Limited direct impact on fixed income markets.", "change": "+0.4%"},
+                "fx": {"direction": "negative", "summary": "TWD and KRW weakened 2-3% on tech sector uncertainty.", "change": "-2.6%"},
+                "commodities": {"direction": "neutral", "summary": "Rare earth prices rose modestly on supply chain concerns.", "change": "+3.1%"},
+            },
+        },
         "articles": [
             {
                 "title": "US Tightens AI Chip Export Controls, Targets NVIDIA H20 Sales to China",
@@ -194,15 +245,19 @@ def seed():
         try:
             execute_query(
                 """
-                INSERT INTO themes (name, slug, description, score_label, score_value, article_count, first_seen_at, last_updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (slug) DO NOTHING
+                INSERT INTO themes (name, slug, description, score_label, score_value, article_count, first_seen_at, last_updated_at, causal_chain)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (slug) DO UPDATE SET
+                    causal_chain = EXCLUDED.causal_chain,
+                    first_seen_at = EXCLUDED.first_seen_at,
+                    last_updated_at = EXCLUDED.last_updated_at
                 """,
                 (
                     ht["name"], ht["slug"], ht["description"],
                     ht["score_label"], ht["score_value"], len(ht["articles"]),
                     ht["articles"][0]["published_at"],  # first_seen = earliest article
                     ht["articles"][-1]["published_at"],  # last_updated = latest article
+                    json.dumps(ht.get("causal_chain")) if ht.get("causal_chain") else None,
                 ),
                 fetch=False,
             )

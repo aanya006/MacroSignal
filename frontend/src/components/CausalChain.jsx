@@ -36,8 +36,11 @@ function CausalArrow() {
   )
 }
 
-function ImpactCard({ asset, impact }) {
+function ImpactCard({ asset, impact, historical }) {
   const dir = DIRECTION_CONFIG[impact?.direction] || DIRECTION_CONFIG.neutral
+  const displayLabel = historical && impact?.change
+    ? `${dir.symbol} ${impact.change}`
+    : `${dir.symbol} ${dir.label}`
   return (
     <div className="rounded-lg bg-[#1e293b] p-3 border border-[#334155]">
       <div className="flex justify-between items-center mb-1.5">
@@ -45,7 +48,7 @@ function ImpactCard({ asset, impact }) {
           {ASSET_LABELS[asset] || asset}
         </span>
         <span className={`text-[11px] font-bold flex items-center gap-1 ${dir.className}`}>
-          {dir.symbol} {dir.label}
+          {displayLabel}
         </span>
       </div>
       <p className="text-xs text-slate-300 leading-relaxed">
@@ -55,7 +58,7 @@ function ImpactCard({ asset, impact }) {
   )
 }
 
-function CausalChain({ chain }) {
+function CausalChain({ chain, historical }) {
   if (!chain || typeof chain === 'string') {
     return (
       <div className="space-y-4">
@@ -74,7 +77,7 @@ function CausalChain({ chain }) {
   return (
     <div className="space-y-3">
       <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-slate-500">
-        Causal Chain
+        {historical ? 'What Happened' : 'Causal Chain'}
       </div>
 
       {/* Trigger */}
@@ -99,13 +102,13 @@ function CausalChain({ chain }) {
 
       {/* Asset Impacts */}
       <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-slate-500 mt-1">
-        Asset Impacts
+        {historical ? 'Outcome' : 'Asset Impacts'}
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <ImpactCard asset="equities" impact={chain.impacts?.equities} />
-        <ImpactCard asset="bonds" impact={chain.impacts?.bonds} />
-        <ImpactCard asset="fx" impact={chain.impacts?.fx} />
-        <ImpactCard asset="commodities" impact={chain.impacts?.commodities} />
+        <ImpactCard asset="equities" impact={chain.impacts?.equities} historical={historical} />
+        <ImpactCard asset="bonds" impact={chain.impacts?.bonds} historical={historical} />
+        <ImpactCard asset="fx" impact={chain.impacts?.fx} historical={historical} />
+        <ImpactCard asset="commodities" impact={chain.impacts?.commodities} historical={historical} />
       </div>
 
       {/* AI Disclaimer */}

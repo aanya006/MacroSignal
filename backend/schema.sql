@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS articles (
     published_at TIMESTAMP,
     full_text TEXT,
     ai_summary TEXT,
+    image_url TEXT,
     region_tags TEXT[],
     asset_tags TEXT[],
     theme_id INTEGER REFERENCES themes(id),

@@ -1,7 +1,15 @@
+import json
+import logging
+import re
 from datetime import datetime, timezone
+
 from flask import Blueprint, jsonify, request
 
 from app.models.db import execute_query
+
+logger = logging.getLogger(__name__)
+
+DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
 memory_bp = Blueprint('memory', __name__)
 
@@ -22,18 +30,37 @@ def search_memory():
                 }
             })
 
+        from_date = request.args.get("from", "").strip() or None
+        to_date = request.args.get("to", "").strip() or None
+
+        # Validate date format (YYYY-MM-DD)
+        if from_date and not DATE_RE.match(from_date):
+            from_date = None
+        if to_date and not DATE_RE.match(to_date):
+            to_date = None
+
         # Escape ILIKE wildcards in user input
         escaped = query.replace("%", "\\%").replace("_", "\\_")
         search_pattern = f"%{escaped}%"
 
+        # Build optional date filter clauses
+        date_clauses = ""
+        date_params = []
+        if from_date:
+            date_clauses += " AND t.first_seen_at >= %s"
+            date_params.append(from_date)
+        if to_date:
+            date_clauses += " AND t.last_updated_at <= %s"
+            date_params.append(to_date)
+
         # Search themes where name/description match OR any linked article title matches
         # Rank by: direct theme match first, then by article count (proxy for relevance), then recency
         results = execute_query(
-            """
+            f"""
             SELECT DISTINCT
                 t.id, t.name, t.slug, t.description,
                 t.score_label, t.score_value, t.article_count,
-                t.first_seen_at, t.last_updated_at,
+                t.first_seen_at, t.last_updated_at, t.causal_chain,
                 CASE
                     WHEN t.name ILIKE %s THEN 3
                     WHEN t.description ILIKE %s THEN 2
@@ -41,13 +68,14 @@ def search_memory():
                 END as relevance
             FROM themes t
             LEFT JOIN articles a ON a.theme_id = t.id
-            WHERE t.name ILIKE %s
+            WHERE t.first_seen_at < NOW() - INTERVAL '7 days'
+               AND (t.name ILIKE %s
                OR t.description ILIKE %s
-               OR a.title ILIKE %s
+               OR a.title ILIKE %s){date_clauses}
             ORDER BY relevance DESC, t.last_updated_at DESC
             LIMIT 20
             """,
-            (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern),
+            (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, *date_params),
         )
 
         # Deduplicate (LEFT JOIN can produce dupes)
@@ -125,6 +153,7 @@ def search_memory():
                 "article_count": r["article_count"],
                 "date_range": date_range,
                 "peak_temperature": peak_temperature,
+                "causal_chain": json.loads(r["causal_chain"]) if isinstance(r.get("causal_chain"), str) else r.get("causal_chain"),
                 "first_seen_at": r["first_seen_at"].isoformat() if hasattr(r.get("first_seen_at"), "isoformat") else r.get("first_seen_at"),
                 "last_updated_at": r["last_updated_at"].isoformat() if hasattr(r.get("last_updated_at"), "isoformat") else r.get("last_updated_at"),
             })
@@ -139,8 +168,9 @@ def search_memory():
         })
 
     except Exception as e:
+        logger.exception("Memory search error: %s", e)
         return jsonify({
             "error": True,
-            "message": str(e),
+            "message": "An internal error occurred while searching.",
             "code": "INTERNAL_ERROR"
         }), 500

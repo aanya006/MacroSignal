@@ -74,6 +74,7 @@ def fetch_from_newsapi():
                 "published_at": item.get("publishedAt"),
                 "full_text": item.get("content") or item.get("description") or "",
                 "description": item.get("description") or "",
+                "image_url": item.get("urlToImage") or "",
             })
         logger.info(f"NewsAPI returned {len(articles)} articles")
         return articles
@@ -154,9 +155,9 @@ def store_articles(articles):
 
             result = execute_query(
                 """
-                INSERT INTO articles (title, source_name, url, published_at, full_text, region_tags, asset_tags, ingested_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
-                ON CONFLICT (url) DO NOTHING
+                INSERT INTO articles (title, source_name, url, published_at, full_text, image_url, region_tags, asset_tags, ingested_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (url) DO UPDATE SET image_url = COALESCE(articles.image_url, EXCLUDED.image_url)
                 """,
                 (
                     article["title"],
@@ -164,6 +165,7 @@ def store_articles(articles):
                     article["url"],
                     article.get("published_at"),
                     article.get("full_text", ""),
+                    article.get("image_url") or None,
                     regions or None,
                     assets or None,
                 ),

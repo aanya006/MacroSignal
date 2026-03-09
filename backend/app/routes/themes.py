@@ -171,7 +171,7 @@ def get_theme_articles(slug):
             articles = execute_query(
                 """
                 SELECT id, title, source_name, url, published_at, ai_summary,
-                       region_tags, asset_tags
+                       image_url, region_tags, asset_tags
                 FROM articles
                 WHERE theme_id = %s AND published_at::date = %s
                 ORDER BY published_at DESC
@@ -182,7 +182,7 @@ def get_theme_articles(slug):
             articles = execute_query(
                 """
                 SELECT id, title, source_name, url, published_at, ai_summary,
-                       region_tags, asset_tags
+                       image_url, region_tags, asset_tags
                 FROM articles
                 WHERE theme_id = %s
                 ORDER BY published_at DESC

@@ -64,6 +64,13 @@ def init_db():
         with conn.cursor() as cur:
             with open(schema_path, 'r') as f:
                 cur.execute(f.read())
+            # Run migrations
+            migrations_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'migrations')
+            if os.path.isdir(migrations_dir):
+                for fname in sorted(os.listdir(migrations_dir)):
+                    if fname.endswith('.sql'):
+                        with open(os.path.join(migrations_dir, fname), 'r') as mf:
+                            cur.execute(mf.read())
             conn.commit()
             print("Database schema initialized successfully")
     except Exception as e:
