@@ -2,17 +2,15 @@
 
 **AI-powered macro intelligence for asset managers.**
 
-MacroSignal cuts through the noise of global financial news by grouping articles into curated macro themes, scoring each theme's market momentum in real time, and generating plain-language causal chain reasoning — so portfolio managers know not just *what* happened, but *why it matters* for their portfolios.
+Bloomberg Terminal costs $25,000/year and doesn't tell you *why* something matters. AlphaSense has no momentum scoring. No tool on the market combines theme tracking, causal chain reasoning, and institutional memory in a single product.
+
+MacroSignal does.
 
 ---
 
-## Problem Statement
+## Architecture Overview
 
-Asset managers are continuously exposed to high volumes of market-moving news — macroeconomic releases, central bank commentary, geopolitical developments, and sector-specific events. Information is fragmented across dozens of platforms. Monitoring is largely manual, dependent on keyword alerts and individual interpretation.
-
-**The result:** critical macro developments get missed until they've already moved prices.
-
-MacroSignal solves this by providing a single, AI-driven interface that tracks how macro narratives evolve, flags when they're gaining or losing momentum, surfaces cross-asset risk implications, and retains institutional memory of past events — all without requiring a $25,000/year Bloomberg Terminal.
+This README covers the technical implementation — architecture, API reference, deployment, and scaling strategy. For a concise product summary, see [PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md).
 
 ---
 
@@ -32,7 +30,7 @@ MacroSignal solves this by providing a single, AI-driven interface that tracks h
 ## Key Features
 
 ### Live Watch List
-21 curated macro themes ranked by temperature score. Hot and Warm themes surface first. Cool themes collapse to reduce noise. Themes span US policy, China economic dynamics, MAS/SGD management, OPEC+, AI infrastructure, and more — with Singapore-specific coverage as a core differentiator.
+Macro themes ranked by temperature score. Hot and Warm themes surface first. Cool themes collapse to reduce noise. Themes span US policy, China economic dynamics, MAS/SGD management, OPEC+, AI infrastructure, and more — with Singapore-specific coverage as a core differentiator.
 
 ### Temperature Scoring
 Scores are computed using exponential decay with a 24-hour half-life:
@@ -62,7 +60,7 @@ This is the core differentiator vs. Bloomberg/AlphaSense: tools give data, Macro
 A searchable archive of historical themes with full causal chains and article timelines. Users can search by keyword, date range, or crisis type (Currency & FX, Equity Crash, Policy Shock, Trade & Geopolitical, Debt & Credit). When viewing a live theme, the system auto-surfaces the closest historical parallel — so a current tariff escalation automatically links to past trade war precedents.
 
 ### Market Signals
-Articles that don't fit the 21 macro themes are surfaced in asset-class swimlanes (Equities, Bonds, FX, Commodities, Crypto, Real Estate) so no financial news is discarded.
+Articles that don't fit the tracked macro themes are surfaced in asset-class swimlanes (Equities, Bonds, FX, Commodities, Crypto, Real Estate) so no financial news is discarded.
 
 ---
 
@@ -91,8 +89,8 @@ Articles that don't fit the 21 macro themes are surfaced in asset-class swimlane
 ### AI Models
 | Model | Usage | Reason |
 |---|---|---|
-| Claude Sonnet 4.6 | Article classification into themes | Higher accuracy for nuanced financial classification |
-| Claude Haiku | Causal chain generation + article summarisation | Cost-efficient for high-frequency generation tasks |
+| Claude Sonnet 4.6 | Article classification + causal chain generation | Higher accuracy for nuanced financial classification and CFA-level causal reasoning |
+| Claude Haiku | Article summarisation | Cost-efficient for high-frequency generation tasks |
 
 ### Infrastructure
 - **Containerisation:** Docker Compose (4 containers: PostgreSQL, Redis, Flask backend, nginx frontend)
@@ -110,10 +108,10 @@ News Sources (NewsAPI + Google RSS + 5 direct RSS feeds)
 news_ingestion.py  ──── fetch, filter, OG image scrape, store to PostgreSQL
     │
     ▼
-theme_classifier.py ─── Claude Sonnet 4.6 classifies article → 21 theme slugs
+theme_classifier.py ─── Claude Sonnet 4.6 classifies article → theme slugs
     │                    (confidence < 0.5 → routed to Market Signals pool)
     ▼
-causal_chain.py ──────── Claude Haiku generates Trigger → Mechanism → Impacts
+causal_chain.py ──────── Claude Sonnet 4.6 generates Trigger → Mechanism → Impacts
     │                    (Hot themes only; 2hr Redis TTL)
     ▼
 summariser.py ────────── Claude Haiku generates 30-word article summaries
@@ -130,7 +128,7 @@ Flask REST API ───────── 7 endpoints served to React SPA
 
 ### Database Schema
 ```sql
-themes        — 21 curated themes with score_label, score_value, causal_chain (JSONB)
+themes        — macro themes with score_label, score_value, causal_chain (JSONB)
 articles      — ingested articles with ai_summary, region_tags[], asset_tags[], theme_id FK
 theme_history — daily snapshots for institutional memory
 ingestion_logs — audit trail of all ingestion runs
@@ -209,7 +207,7 @@ MacroSignal is designed as an **information aggregation and research tool**, not
 - **Professional** — $799/month per team (up to 10 users): All features + API access + custom theme requests
 - **Enterprise** — Custom pricing: White-label, SSO, on-premise deployment, dedicated ingestion pipeline
 
-**Unit economics at scale:** Claude Haiku API cost per causal chain generation is approximately $0.002–0.005 per theme per day. At 21 themes and 30-day refresh cycles, total AI inference cost per customer is well under $5/month, leaving strong gross margins at the Starter tier.
+**Unit economics at scale:** Claude API cost per causal chain generation is approximately $0.01–0.03 per theme per day. With 30-day refresh cycles, total AI inference cost per customer is well under $10/month, leaving strong gross margins at the Starter tier.
 
 ### Go-to-Market Strategy
 1. **Pilot with Singapore-based boutique asset managers** via NTU alumni network and NTUpreneur ecosystem connections — target 5 design partners in Q2 2026

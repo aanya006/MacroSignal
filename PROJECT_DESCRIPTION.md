@@ -2,7 +2,7 @@
 
 ## What is MacroSignal?
 
-MacroSignal is an AI-powered macro intelligence dashboard built for asset managers. It ingests real-time financial news from multiple sources, classifies articles into 21 curated macro themes (e.g. US Fed Rate Path, China Economic Slowdown, MAS Policy & SGD Management), and scores each theme's market momentum using exponential decay temperature scoring — surfacing what's Hot, Warm, or Cool at a glance.
+MacroSignal is an AI-powered macro intelligence dashboard built for asset managers. It ingests real-time financial news from multiple sources, uses Claude AI to classify articles into macro themes, and scores each theme's market momentum using exponential decay temperature scoring — surfacing what's Hot, Warm, or Cool at a glance.
 
 ## How It Solves the Problem Statement
 
