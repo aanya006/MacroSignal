@@ -123,7 +123,7 @@ function CausalChain({ chain, historical }) {
         <span className="px-2 py-0.5 rounded bg-purple-500/15 text-purple-400 text-[10px] font-semibold">
           AI-Generated
         </span>
-        For informational purposes only — not financial advice.
+        For research purposes only — not investment advice (SFA Cap. 289).
       </div>
     </div>
   )
