@@ -7,7 +7,7 @@ _scheduler = None
 
 
 def run_scheduled_ingestion():
-    """Wrapper for scheduled ingestion + clustering."""
+    """Wrapper for scheduled ingestion + clustering + causal chain generation."""
     logger.info("Scheduled ingestion cycle starting...")
     try:
         from app.services.news_ingestion import run_ingestion
@@ -21,9 +21,16 @@ def run_scheduled_ingestion():
     except Exception as e:
         logger.error(f"Scheduled ingestion failed: {e}")
 
+    try:
+        from app.services.causal_chain import generate_chains_for_hot_themes
+        generated = generate_chains_for_hot_themes()
+        logger.info(f"Causal chain generation complete: {generated} chains updated")
+    except Exception as e:
+        logger.error(f"Causal chain generation failed: {e}")
+
 
 def init_scheduler(app):
-    """Initialize APScheduler with 30-minute ingestion cycle."""
+    """Initialize APScheduler with 120-minute ingestion cycle."""
     global _scheduler
     if _scheduler is not None:
         return
@@ -32,9 +39,9 @@ def init_scheduler(app):
     _scheduler.add_job(
         run_scheduled_ingestion,
         'interval',
-        minutes=30,
+        minutes=120,
         id='news_ingestion',
         replace_existing=True,
     )
     _scheduler.start()
-    logger.info("Scheduler started: ingestion every 30 minutes")
+    logger.info("Scheduler started: ingestion every 120 minutes")

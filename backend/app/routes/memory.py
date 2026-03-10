@@ -77,7 +77,7 @@ def search_memory():
                     1 as relevance
                 FROM themes t
                 WHERE t.is_historical = TRUE{date_clauses}
-                ORDER BY t.first_seen_at ASC
+                ORDER BY t.first_seen_at DESC
                 """,
                 (*date_params,) if date_params else None,
             )

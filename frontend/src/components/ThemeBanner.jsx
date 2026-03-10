@@ -47,11 +47,7 @@ function ThemeBanner({ theme, showLink = true }) {
           <span className="text-slate-500 text-xs">Articles</span>
           <span className="ml-2 font-semibold text-slate-200">{theme.article_count}</span>
         </div>
-        <div>
-          <span className="text-slate-500 text-xs">Score</span>
-          <span className="ml-2 font-semibold text-slate-200">{theme.score_value?.toFixed(1) ?? '--'}</span>
-        </div>
-        {theme.date_range && (
+{theme.date_range && (
           <div>
             <span className="text-slate-500 text-xs">Coverage</span>
             <span className="ml-2 font-semibold text-slate-200">

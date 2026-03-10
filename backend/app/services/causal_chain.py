@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 _client = None
 
-CAUSAL_CHAIN_PROMPT = """You are a macro strategist explaining market dynamics to a non-technical asset manager in Singapore.
-
-Given this macro theme and its recent articles, generate a causal chain analysis.
+CAUSAL_CHAIN_PROMPT = """You are a senior macro strategist writing a concise market intelligence brief for an experienced buy-side asset manager. Your audience actively manages multi-asset portfolios and expects precise, professional analysis — not simplified explanations.
 
 Theme: {theme_name}
 Description: {theme_description}
@@ -27,23 +25,27 @@ Description: {theme_description}
 Recent articles:
 {articles_context}
 
+Generate a causal chain analysis grounded in the specific developments described in the articles above. Do not produce generic textbook reasoning — every sentence must reflect what is actually happening in the news provided.
+
 Respond with ONLY valid JSON in this exact format (no markdown, no code fences):
 {{
-  "trigger": "One sentence describing the macro event or catalyst",
-  "mechanism": "One sentence explaining how this transmits through markets",
+  "trigger": "One sentence identifying the specific macro catalyst or policy shift, using precise terminology (e.g. rate differentials, yield curve dynamics, fiscal expansion)",
+  "mechanism": "One sentence explaining the exact transmission pathway through financial markets — name the mechanism (e.g. risk-off rotation, dollar funding squeeze, commodity supply shock, capital flow reversal)",
   "impacts": {{
-    "equities": {{"direction": "positive|negative|neutral", "summary": "One sentence on equity market impact"}},
-    "bonds": {{"direction": "positive|negative|neutral", "summary": "One sentence on bond market impact"}},
-    "fx": {{"direction": "positive|negative|neutral", "summary": "One sentence on currency market impact"}},
-    "commodities": {{"direction": "positive|negative|neutral", "summary": "One sentence on commodity market impact"}}
+    "equities": {{"direction": "positive|negative|neutral", "summary": "One to two sentences on equity market impact — specify sectors, indices, or valuation dynamics affected; reference Asia/Singapore where relevant"}},
+    "bonds": {{"direction": "positive|negative|neutral", "summary": "One to two sentences on fixed income impact — reference duration, credit spreads, sovereign vs corporate, or yield curve implications"}},
+    "fx": {{"direction": "positive|negative|neutral", "summary": "One to two sentences on currency dynamics — name specific pairs or EM currency baskets; reference SGD or Asian FX where applicable"}},
+    "commodities": {{"direction": "positive|negative|neutral", "summary": "One to two sentences on commodity market impact — specify the relevant commodity class and supply/demand or geopolitical driver"}}
   }}
 }}
 
 Rules:
-- Use plain language, no jargon or formulas
-- Each summary must be one sentence, max 25 words
+- Write for a CFA-level reader — use standard financial terminology without explanation
+- Be specific: reference actual market mechanisms, not generic cause-effect
 - Direction must be exactly "positive", "negative", or "neutral"
-- Focus on Singapore/Asia relevance where applicable"""
+- Each impact summary is one to two sentences maximum
+- Ground every claim in the article context provided — avoid boilerplate
+- Reference Singapore or Asian market implications where naturally relevant, but do not force it"""
 
 
 def _get_client():
@@ -80,7 +82,7 @@ def generate_causal_chain(theme):
         FROM articles
         WHERE theme_id = %s AND published_at IS NOT NULL
         ORDER BY published_at DESC
-        LIMIT 5
+        LIMIT 10
         """,
         (theme["id"],),
     )
@@ -102,8 +104,8 @@ def generate_causal_chain(theme):
 
     try:
         response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=500,
+            model="claude-sonnet-4-6",
+            max_tokens=800,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = response.content[0].text.strip()
