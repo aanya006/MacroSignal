@@ -105,6 +105,23 @@ function ThemeDetailPanel({ theme, onOpenPrecedent }) {
             <p className="text-2xl font-semibold text-slate-200">{title}</p>
             <p className="text-base text-slate-500">{subtitle}</p>
           </div>
+
+          {/* Temperature legend */}
+          <p className="text-xs text-slate-500">Themes are ranked by momentum, not just volume.</p>
+          <div className="flex items-center justify-center gap-4">
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+              Hot — breaking now
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+              Warm — developing
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="inline-block w-2 h-2 rounded-full bg-slate-500" />
+              Cool — quiet
+            </span>
+          </div>
         </div>
       </main>
     )

@@ -93,7 +93,19 @@ function HistoricalParallel({ theme, onOpenPrecedent }) {
     )
   }
 
-  if (!parallel) return null
+  if (!parallel) return (
+    <div className="mt-4 pt-4 border-t border-dashed border-slate-700">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-bold flex items-center justify-center">
+          H
+        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-[1.2px] text-purple-400">
+          Historical Precedent
+        </span>
+      </div>
+      <p className="text-xs text-slate-500">No close historical parallel found for this theme.</p>
+    </div>
+  )
 
   const dateRange = parallel.date_range?.earliest
     ? `${new Date(parallel.date_range.earliest).toLocaleDateString('en-SG', { month: 'short', year: 'numeric' })}`

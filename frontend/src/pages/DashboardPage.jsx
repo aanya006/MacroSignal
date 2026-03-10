@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import useThemeStore from '../store/useThemeStore'
 import ThemeFeed from '../components/ThemeFeed'
 import ThemeDetailPanel from '../components/ThemeDetailPanel'
@@ -69,12 +69,12 @@ function DashboardPage() {
     <div className="h-screen flex flex-col bg-[#0f172a] text-slate-200">
       {/* Header */}
       <header className="h-14 px-6 flex items-center justify-between border-b border-slate-700 shrink-0">
-        <div className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <img src="/microsignal-icon.svg" alt="MacroSignal" className="h-6 w-auto" />
           <h1 className="text-xl font-bold text-white tracking-tight">
             MacroSignal
           </h1>
-        </div>
+        </Link>
         <div className="flex items-center gap-1.5 text-xs text-green-500">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
           Live · Updated {last_updated ? formatTimeAgo(last_updated) : '--'}

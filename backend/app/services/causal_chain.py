@@ -25,7 +25,7 @@ Description: {theme_description}
 Recent articles:
 {articles_context}
 
-Generate a causal chain analysis grounded in the specific developments described in the articles above. Do not produce generic textbook reasoning — every sentence must reflect what is actually happening in the news provided.
+Generate a causal chain analysis grounded in the specific developments described in the articles above. Use the articles as the primary grounding for current developments, but draw on your broader knowledge of macroeconomic dynamics, historical market behavior, and financial transmission mechanisms to provide deeper context. Do not produce generic textbook reasoning — connect the specific news to real market mechanisms.
 
 Respond with ONLY valid JSON in this exact format (no markdown, no code fences):
 {{
