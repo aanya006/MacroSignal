@@ -29,3 +29,11 @@ Thumbs.db
 # Large binary files
 *.pdf
 *.pptx
+
+# BMAD framework internals
+_bmad/
+_bmad-output/implementation-artifacts/
+_bmad-output/brainstorming/
+
+# Claude Code config
+.claude/commands/
