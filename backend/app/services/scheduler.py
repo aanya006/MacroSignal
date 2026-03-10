@@ -30,7 +30,7 @@ def run_scheduled_ingestion():
 
 
 def init_scheduler(app):
-    """Initialize APScheduler with 120-minute ingestion cycle."""
+    """Initialize APScheduler with twice-daily ingestion cycle (every 12 hours)."""
     global _scheduler
     if _scheduler is not None:
         return
@@ -39,9 +39,9 @@ def init_scheduler(app):
     _scheduler.add_job(
         run_scheduled_ingestion,
         'interval',
-        minutes=120,
+        hours=12,
         id='news_ingestion',
         replace_existing=True,
     )
     _scheduler.start()
-    logger.info("Scheduler started: ingestion every 120 minutes")
+    logger.info("Scheduler started: ingestion every 12 hours")
