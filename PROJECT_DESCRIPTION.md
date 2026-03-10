@@ -18,3 +18,4 @@ MacroSignal solves this by:
 - **Proposing risk implications** via AI-generated causal chain reasoning: Trigger → Mechanism → Asset Impacts across Equities, Bonds, FX, and Commodities — written for a CFA-level audience
 
 No tool on the market offers causal chain intelligence, hot/cool momentum scoring, and institutional memory in a single affordable product.
+
