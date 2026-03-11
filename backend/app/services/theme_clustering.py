@@ -115,7 +115,7 @@ THEME_DEFINITIONS = {
     },
     "mas-sgd-policy": {
         "name": "MAS Policy & SGD Management",
-        "keywords": ["mas ", "mas.", "mas,", "monetary authority of singapore", "singapore dollar", "sgd", "neer", "s$neer", "mas policy"],
+        "keywords": ["monetary authority of singapore", "mas monetary policy", "mas policy", "sgd neer", "s$neer", "singapore dollar policy", "singapore exchange rate policy"],
         "description": "Singapore monetary policy, S$NEER band adjustments, regional FX impact",
     },
 }

@@ -38,7 +38,13 @@ def _build_theme_list():
 def _build_prompt():
     """Build the classification prompt with the current theme list."""
     theme_list = _build_theme_list()
-    return f"""You are a financial news classifier. Classify this article into exactly one of these macro narrative themes, or none if it doesn't fit.
+    return f"""You are a macro financial news classifier for institutional investors. Your job is to classify news articles into curated macro narrative themes.
+
+Rules:
+- Only classify an article if it is DIRECTLY and SUBSTANTIVELY about the theme — the theme must be the article's primary subject.
+- Do NOT classify based on geographic tags alone. An article mentioning Singapore, Japan, or China is NOT automatically relevant to that country's monetary policy theme.
+- Do NOT classify promotional content, press releases, sports, entertainment, or technology product launches unless they have clear, direct macro market implications.
+- If the article is only tangentially related, return null.
 
 Themes:
 {theme_list}
@@ -53,7 +59,7 @@ def _get_valid_slugs():
     return set(THEME_DEFINITIONS.keys())
 
 
-CONFIDENCE_THRESHOLD = 0.5
+CONFIDENCE_THRESHOLD = 0.65
 
 
 def classify_article_with_claude(title, text):
