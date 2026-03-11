@@ -48,6 +48,29 @@ def backfill_images():
         return jsonify({"error": True, "message": str(e), "code": "BACKFILL_ERROR"}), 500
 
 
+@ingestion_bp.route('/api/admin/reclassify/<slug>', methods=['POST'])
+def trigger_reclassify_theme(slug):
+    """Reclassify only articles under a specific theme.
+
+    Usage: POST /api/admin/reclassify/mas-sgd-policy
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Admin targeted reclassification triggered for '{slug}'")
+    try:
+        from app.services.theme_clustering import reclassify_theme
+        result = reclassify_theme(slug)
+        return jsonify({
+            "data": result,
+            "meta": {"last_updated": datetime.now(timezone.utc).isoformat()}
+        })
+    except ValueError as e:
+        return jsonify({"error": True, "message": str(e), "code": "THEME_NOT_FOUND"}), 404
+    except Exception as e:
+        logger.error(f"Targeted reclassification failed: {e}")
+        return jsonify({"error": True, "message": str(e), "code": "RECLASSIFY_ERROR"}), 500
+
+
 @ingestion_bp.route('/api/admin/reclassify', methods=['POST'])
 def trigger_reclassify():
     """Wipe all theme assignments and reclassify against new 21 narrative themes.

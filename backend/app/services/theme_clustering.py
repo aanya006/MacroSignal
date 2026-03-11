@@ -392,6 +392,70 @@ def aggregate_theme_tags():
     logger.info("Theme-level tags aggregated from articles")
 
 
+def reclassify_theme(target_slug):
+    """Reclassify only articles currently assigned to a specific theme.
+
+    Unlinks those articles, reclassifies them (they may land in a different
+    theme, the same theme, or no theme), then refreshes scores and caches.
+    """
+    logger.info(f"Starting targeted reclassification for theme '{target_slug}'")
+
+    # Get the theme ID
+    theme_rows = execute_query(
+        "SELECT id FROM themes WHERE slug = %s", (target_slug,)
+    )
+    if not theme_rows:
+        raise ValueError(f"Theme '{target_slug}' not found")
+
+    theme_id = theme_rows[0]["id"]
+
+    # Count affected articles
+    count_rows = execute_query(
+        "SELECT COUNT(*) as cnt FROM articles WHERE theme_id = %s", (theme_id,)
+    )
+    article_count = count_rows[0]["cnt"] if count_rows else 0
+    logger.info(f"Unlinking {article_count} articles from '{target_slug}'")
+
+    # Unlink articles from this theme
+    execute_query(
+        "UPDATE articles SET theme_id = NULL WHERE theme_id = %s",
+        (theme_id,),
+        fetch=False,
+    )
+
+    # Clear the theme's causal chain so it regenerates fresh
+    execute_query(
+        "UPDATE themes SET causal_chain = NULL, causal_chain_generated_at = NULL, "
+        "article_count = 0, score_value = 0, score_label = 'cool' WHERE id = %s",
+        (theme_id,),
+        fetch=False,
+    )
+
+    # Reclassify just the unlinked articles (now theme_id IS NULL)
+    assigned = cluster_articles()
+    calculate_temperatures()
+    aggregate_theme_tags()
+
+    # Regenerate causal chains for hot themes
+    try:
+        from app.services.causal_chain import generate_chains_for_hot_themes
+        generate_chains_for_hot_themes()
+    except Exception as e:
+        logger.error(f"Causal chain generation error during reclassification: {e}")
+
+    snapshot_themes()
+    themes = cache_themes()
+
+    logger.info(f"Targeted reclassification complete for '{target_slug}': "
+                f"{article_count} articles unlinked, {assigned} reassigned")
+    return {
+        "target_theme": target_slug,
+        "articles_unlinked": article_count,
+        "articles_reassigned": assigned,
+        "active_themes": len(themes),
+    }
+
+
 def reclassify_all_articles():
     """Wipe all theme assignments and reclassify everything against the new 21 themes.
 
