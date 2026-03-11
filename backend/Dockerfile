@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 5001
 
-CMD ["gunicorn", "-b", "0.0.0.0:5001", "--workers", "2", "--timeout", "120", "wsgi:app"]
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]

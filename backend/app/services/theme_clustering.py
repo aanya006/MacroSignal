@@ -11,112 +11,177 @@ from app.utils.cache import cache_set
 logger = logging.getLogger(__name__)
 
 # 21 curated narrative themes — Watch List
-# Keywords are broad fallback only, used when Claude API is unavailable
+# Keywords are scored fallback only, used when Claude API is unavailable.
+# Each keyword has a weight (2 = strong signal, 1 = supporting signal).
+# exclude_keywords prevent false positives from overlapping themes.
 THEME_DEFINITIONS = {
     "us-policy-regime-shift": {
         "name": "US Policy Regime Shift (Trump 2.0 / DOGE)",
-        "keywords": ["trump", "doge", "executive order", "deregulation", "government efficiency", "musk", "tariff executive"],
-        "description": "Executive orders, deregulation, government efficiency initiatives",
+        "keywords": [("doge government", 2), ("executive order", 2), ("government efficiency", 2), ("deregulation", 2), ("trump executive", 2), ("musk government", 2), ("trump deregulation", 2), ("federal workforce", 2), ("trump policy", 1)],
+        "exclude_keywords": ["tariff on china", "china tariff", "chip ban", "export control"],
+        "description": "Executive orders, deregulation, government efficiency initiatives — US domestic policy restructuring",
+        "must_include": "US domestic policy actions: executive orders, DOGE, deregulation, government restructuring",
+        "must_exclude": "China-specific tariffs (use us-china-tariffs), Fed rate decisions (use us-fed-rate-path)",
     },
     "us-china-tariffs-tech-decoupling": {
         "name": "US-China Tariffs & Tech Decoupling",
-        "keywords": ["us china tariff", "trade war", "tech decoupling", "export control", "chip ban", "reshoring", "us china trade"],
-        "description": "Bilateral tariffs, export controls, tech bans, supply chain reshoring",
+        "keywords": [("us china tariff", 2), ("trade war", 2), ("tech decoupling", 2), ("export control", 2), ("chip ban", 2), ("reshoring", 2), ("us china trade", 2), ("china tariff", 2), ("entity list", 2), ("trade deficit china", 1)],
+        "exclude_keywords": ["executive order deregulation", "government efficiency", "doge"],
+        "description": "Bilateral US-China tariffs, export controls, tech bans, supply chain reshoring",
+        "must_include": "US-China bilateral trade/tech tensions: tariffs, chip bans, export controls, reshoring from China",
+        "must_exclude": "Broad US domestic policy (use us-policy-regime-shift), China macro data (use china-economic-slowdown)",
     },
     "us-fed-rate-path": {
         "name": "US Fed Rate Path & Forward Guidance",
-        "keywords": ["federal reserve", "fed rate", "fomc", "powell", "fed funds", "rate cut", "rate hike", "fed policy"],
-        "description": "Federal Reserve rate decisions, FOMC statements, inflation targeting",
+        "keywords": [("federal reserve", 2), ("fomc", 2), ("fed funds rate", 2), ("powell", 2), ("fed rate", 2), ("fed cut", 2), ("fed hike", 2), ("fed hold", 2), ("us interest rate", 2), ("fed governor", 1), ("fed chair", 1), ("federal open market", 2)],
+        "exclude_keywords": ["ecb", "european central bank", "bank of england", "boe", "bank of japan", "boj", "rba", "reserve bank of australia", "pboc", "peoples bank", "rbnz", "bank of canada", "riksbank", "bank indonesia", "mas monetary"],
+        "description": "US Federal Reserve rate decisions, FOMC statements, Fed forward guidance. EXCLUSIVELY the US Fed.",
+        "must_include": "US Federal Reserve (Fed/FOMC/Powell) rate decisions, dot plots, forward guidance, QE/QT",
+        "must_exclude": "ANY other central bank (ECB, BOE, BOJ, RBA, PBOC, MAS, etc.) — return null for those",
     },
     "europe-rearmament-defense": {
         "name": "Europe Rearmament & Defense Capex",
-        "keywords": ["europe defense", "nato spending", "rearmament", "defense budget", "european defense", "defense stock", "military spending europe"],
-        "description": "European defense spending increases, NATO commitments, defense stocks",
+        "keywords": [("europe defense", 2), ("rearmament", 2), ("european defense", 2), ("defense budget europe", 2), ("nato spending", 2), ("military spending europe", 2), ("defense stock europe", 1), ("european military", 2)],
+        "exclude_keywords": ["ukraine war frontline", "russia attack", "ceasefire"],
+        "description": "European defense spending increases, NATO budget commitments, defense industrial stocks",
+        "must_include": "European defense SPENDING/BUDGET/CAPEX increases, NATO financial commitments, defense industry",
+        "must_exclude": "Russia-Ukraine war operations (use russia-ukraine-european-security)",
     },
     "ai-disruption-compute": {
         "name": "AI Disruption & Compute Infrastructure",
-        "keywords": ["artificial intelligence", "ai model", "gpu", "data center", "nvidia", "ai regulation", "compute", "machine learning"],
-        "description": "AI model advances, GPU/chip demand, data center buildout, AI regulation",
+        "keywords": [("artificial intelligence", 2), ("ai model", 2), ("gpu demand", 2), ("data center", 2), ("nvidia", 2), ("ai regulation", 2), ("compute infrastructure", 2), ("machine learning", 1), ("large language model", 2), ("ai chip", 2)],
+        "exclude_keywords": ["semiconductor supply chain", "rare earth", "chip shortage"],
+        "description": "AI model advances, GPU/chip demand, data center buildout, AI regulation with macro implications",
+        "must_include": "AI technology impact on markets/economy: model advances, compute demand, AI regulation, data center buildout",
+        "must_exclude": "Semiconductor supply chains without AI angle (use critical-minerals-semiconductors), company product launches without macro angle",
     },
     "middle-east-conflict-energy": {
         "name": "Middle East Conflict & Energy Risk",
-        "keywords": ["middle east conflict", "iran", "israel", "houthi", "strait of hormuz", "gaza", "oil supply risk", "red sea"],
-        "description": "Regional conflicts affecting oil supply, Strait of Hormuz, energy prices",
+        "keywords": [("middle east conflict", 2), ("iran israel", 2), ("houthi", 2), ("strait of hormuz", 2), ("gaza", 2), ("red sea shipping", 2), ("oil supply risk", 2), ("iran nuclear", 2), ("hezbollah", 2), ("iran sanctions", 1)],
+        "exclude_keywords": ["opec quota", "opec meeting", "production cut opec", "saudi production"],
+        "description": "Geopolitical conflicts in Middle East causing energy supply disruption risk",
+        "must_include": "Middle East CONFLICT/TENSION (Iran, Israel, Houthi, Red Sea) with energy supply risk angle",
+        "must_exclude": "OPEC production management/quotas without conflict angle (use opec-oil-supply)",
     },
     "russia-ukraine-european-security": {
         "name": "Russia-Ukraine War & European Security",
-        "keywords": ["russia ukraine", "ukraine war", "sanctions russia", "european energy", "nato", "zelensky", "putin"],
-        "description": "War developments, sanctions, European energy security, NATO",
+        "keywords": [("russia ukraine", 2), ("ukraine war", 2), ("sanctions russia", 2), ("european energy security", 2), ("zelensky", 2), ("putin ukraine", 2), ("crimea", 2), ("ukraine frontline", 1), ("russian gas", 2)],
+        "exclude_keywords": ["europe defense budget", "rearmament spending", "defense stock"],
+        "description": "War developments, Russia sanctions, European energy security impacts",
+        "must_include": "Russia-Ukraine WAR operations, sanctions on Russia, European energy security from Russian gas",
+        "must_exclude": "European defense spending increases (use europe-rearmament-defense)",
     },
     "china-economic-slowdown": {
         "name": "China Economic Slowdown & Property Crisis",
-        "keywords": ["china gdp", "china property", "evergrande", "china deflation", "chinese economy", "country garden", "china consumer"],
-        "description": "GDP growth, property developer defaults, consumer confidence, deflation",
+        "keywords": [("china gdp", 2), ("china property crisis", 2), ("evergrande", 2), ("china deflation", 2), ("chinese economy slow", 2), ("country garden", 2), ("china consumer confidence", 2), ("china pmi", 2), ("china unemployment", 2), ("china housing", 1)],
+        "exclude_keywords": ["pboc", "rrr cut", "rate cut", "stimulus package", "liquidity injection", "china easing", "taiwan strait", "south china sea"],
+        "description": "China GDP weakness, property developer defaults, consumer confidence collapse, deflation data",
+        "must_include": "China macro WEAKNESS data: GDP miss, property crisis, deflation, weak consumer/PMI — the PROBLEM",
+        "must_exclude": "PBOC policy response (use china-pboc-stimulus), Taiwan/military tensions (use china-taiwan-indo-pacific)",
     },
     "china-pboc-stimulus": {
         "name": "China PBOC Stimulus & Monetary Easing",
-        "keywords": ["pboc", "china rate cut", "rrr cut", "china stimulus", "china liquidity", "china fiscal", "china easing"],
-        "description": "Rate cuts, RRR cuts, liquidity injections, fiscal stimulus packages",
+        "keywords": [("pboc", 2), ("china rate cut", 2), ("rrr cut", 2), ("china stimulus", 2), ("china liquidity", 2), ("china fiscal stimulus", 2), ("china easing", 2), ("mlf rate", 2), ("lpr cut", 2), ("peoples bank of china", 2)],
+        "exclude_keywords": ["china gdp miss", "china deflation data", "property default", "evergrande collapse", "taiwan", "south china sea"],
+        "description": "PBOC rate cuts, RRR cuts, MLF/LPR adjustments, fiscal stimulus packages — the POLICY RESPONSE",
+        "must_include": "PBOC or Chinese government POLICY ACTIONS: rate cuts, RRR, stimulus packages, liquidity injections",
+        "must_exclude": "China macro weakness data (use china-economic-slowdown), military tensions (use china-taiwan-indo-pacific)",
     },
     "critical-minerals-semiconductors": {
         "name": "Critical Minerals & Semiconductor Supply",
-        "keywords": ["semiconductor supply", "rare earth", "lithium", "chip shortage", "tsmc", "critical mineral", "cobalt"],
-        "description": "Chip supply chains, rare earths, lithium, export restrictions",
+        "keywords": [("semiconductor supply", 2), ("rare earth", 2), ("lithium supply", 2), ("chip shortage", 2), ("tsmc", 2), ("critical mineral", 2), ("cobalt", 2), ("chip supply chain", 2), ("semiconductor fabrication", 1)],
+        "exclude_keywords": ["ai model", "large language model", "gpu demand ai", "data center ai"],
+        "description": "Semiconductor fabrication supply chains, rare earth minerals, lithium, export restrictions on materials",
+        "must_include": "SUPPLY CHAIN for chips/minerals: fabrication capacity, rare earth access, material export bans",
+        "must_exclude": "AI demand for chips (use ai-disruption-compute), US-China chip bans (use us-china-tariffs if trade-focused)",
     },
     "global-sovereign-debt": {
         "name": "Global Sovereign Debt & Fiscal Sustainability",
-        "keywords": ["sovereign debt", "fiscal deficit", "government debt", "bond vigilante", "debt crisis", "debt ceiling", "fiscal sustainability"],
-        "description": "Government debt levels, fiscal deficits, bond vigilantes, debt crises",
+        "keywords": [("sovereign debt", 2), ("fiscal deficit", 2), ("government debt gdp", 2), ("bond vigilante", 2), ("debt crisis", 2), ("debt ceiling", 2), ("fiscal sustainability", 2), ("national debt", 2), ("debt-to-gdp", 2)],
+        "exclude_keywords": ["emerging market currency", "em crisis", "capital flight"],
+        "description": "Government debt levels, fiscal deficits, bond market reactions, debt sustainability concerns",
+        "must_include": "SOVEREIGN debt levels, fiscal deficit concerns, bond vigilantes, debt ceiling — developed or systemic",
+        "must_exclude": "EM-specific currency/debt stress (use emerging-market-stress)",
     },
     "emerging-market-stress": {
         "name": "Emerging Market Currency & Debt Stress",
-        "keywords": ["emerging market", "em currency", "capital flight", "dollar debt", "em crisis", "frontier market", "em bond"],
-        "description": "EM currency depreciation, dollar-denominated debt, capital flight",
+        "keywords": [("emerging market crisis", 2), ("em currency depreciation", 2), ("capital flight em", 2), ("dollar debt em", 2), ("frontier market", 2), ("em bond spread", 2), ("emerging market debt", 2), ("em capital outflow", 2)],
+        "exclude_keywords": ["china gdp", "china property", "india gdp", "india growth", "pboc"],
+        "description": "EM currency depreciation, dollar-denominated debt stress, capital flight from emerging markets",
+        "must_include": "BROAD EM stress: currency depreciation, dollar debt burden, capital outflows from multiple EMs",
+        "must_exclude": "China-specific issues (use china themes), India-specific growth (use india-growth-ascent)",
     },
     "india-growth-ascent": {
         "name": "India's Growth Ascent",
-        "keywords": ["india gdp", "india growth", "india manufacturing", "modi", "india reform", "india market", "india demographic"],
-        "description": "GDP growth, manufacturing shift, demographic dividend, market reforms",
+        "keywords": [("india gdp", 2), ("india growth", 2), ("india manufacturing", 2), ("modi reform", 2), ("india reform", 2), ("india market", 1), ("india demographic dividend", 2), ("make in india", 2), ("india infrastructure", 2)],
+        "exclude_keywords": ["emerging market crisis", "em currency", "capital flight"],
+        "description": "India GDP growth, manufacturing shift, demographic dividend, structural reforms",
+        "must_include": "India GROWTH story: GDP expansion, manufacturing investment, reforms, demographic advantage",
+        "must_exclude": "Broad EM stress that happens to include India (use emerging-market-stress)",
     },
     "opec-oil-supply": {
         "name": "OPEC+ Production & Oil Supply Politics",
-        "keywords": ["opec", "oil production", "saudi oil", "oil quota", "oil price", "crude oil", "brent", "oil supply"],
-        "description": "Production quotas, Saudi-Russia dynamics, oil price management",
+        "keywords": [("opec", 2), ("opec production", 2), ("saudi oil production", 2), ("oil quota", 2), ("oil supply opec", 2), ("crude oil opec", 2), ("opec meeting", 2), ("production cut", 2), ("oil output", 1)],
+        "exclude_keywords": ["iran israel", "houthi", "red sea", "gaza", "strait of hormuz", "middle east conflict"],
+        "description": "OPEC+ production quotas, Saudi-Russia dynamics, coordinated oil supply management",
+        "must_include": "OPEC+ PRODUCTION decisions: quotas, output cuts/increases, Saudi-Russia oil coordination",
+        "must_exclude": "Middle East conflict causing oil risk (use middle-east-conflict-energy)",
     },
     "labor-immigration-demographics": {
         "name": "Labor Markets, Immigration & Demographics",
-        "keywords": ["labor market", "wage growth", "labor shortage", "immigration policy", "aging population", "unemployment", "jobs report"],
-        "description": "Wage growth, labor shortages, immigration policy, aging populations",
+        "keywords": [("labor market", 2), ("wage growth", 2), ("labor shortage", 2), ("immigration policy", 2), ("aging population", 2), ("jobs report", 2), ("nonfarm payroll", 2), ("unemployment rate", 1), ("workforce participation", 2)],
+        "exclude_keywords": [],
+        "description": "Wage growth trends, labor shortages, immigration policy impact, aging population demographics",
+        "must_include": "LABOR/DEMOGRAPHIC macro trends: wage data, employment reports, immigration policy, aging demographics",
+        "must_exclude": "Individual company layoffs without macro angle",
     },
     "credit-shadow-banking": {
         "name": "Credit Conditions & Shadow Banking Risk",
-        "keywords": ["credit spread", "private credit", "banking stress", "lending standard", "shadow banking", "credit crunch", "bank failure"],
-        "description": "Credit spreads, private credit, banking stress, lending standards",
+        "keywords": [("credit spread", 2), ("private credit", 2), ("banking stress", 2), ("lending standard", 2), ("shadow banking", 2), ("credit crunch", 2), ("bank failure", 2), ("commercial real estate loan", 2), ("credit tightening", 2)],
+        "exclude_keywords": [],
+        "description": "Credit spreads, private credit growth, banking stress, lending standards tightening",
+        "must_include": "CREDIT CONDITIONS: spreads, lending standards, banking stress, shadow banking, systemic credit risk",
+        "must_exclude": "Sovereign debt (use global-sovereign-debt), individual bank earnings without systemic angle",
     },
     "nuclear-energy-renaissance": {
         "name": "Nuclear Energy Renaissance",
-        "keywords": ["nuclear energy", "nuclear reactor", "smr", "uranium", "nuclear power", "nuclear policy", "small modular reactor"],
-        "description": "New reactor builds, SMRs, nuclear policy shifts, uranium demand",
+        "keywords": [("nuclear energy", 2), ("nuclear reactor", 2), ("small modular reactor", 2), ("uranium", 2), ("nuclear power plant", 2), ("nuclear policy", 2), ("smr", 2), ("nuclear renaissance", 2)],
+        "exclude_keywords": ["nuclear weapon", "nuclear warhead", "iran nuclear deal"],
+        "description": "New reactor builds, SMRs, nuclear policy shifts, uranium demand for energy",
+        "must_include": "Nuclear ENERGY: reactor construction, SMR technology, nuclear policy for power generation, uranium demand",
+        "must_exclude": "Nuclear weapons/proliferation, Iran nuclear deal (use middle-east-conflict-energy if conflict-related)",
     },
     "boj-yen-dynamics": {
         "name": "BOJ Policy Normalization & Yen Dynamics",
-        "keywords": ["boj", "bank of japan", "yen", "yield curve control", "ueda", "japanese yen", "yen carry trade"],
-        "description": "Rate hikes, yield curve control changes, yen carry trade",
+        "keywords": [("bank of japan", 2), ("boj rate", 2), ("yen carry trade", 2), ("yield curve control", 2), ("ueda", 2), ("japanese yen", 2), ("boj policy", 2), ("japan interest rate", 2), ("boj normalization", 2)],
+        "exclude_keywords": ["federal reserve", "fomc", "powell", "ecb", "pboc"],
+        "description": "BOJ rate decisions, yield curve control changes, yen carry trade dynamics",
+        "must_include": "Bank of Japan POLICY: rate decisions, YCC changes, yen dynamics from BOJ actions",
+        "must_exclude": "Other central banks (use their respective themes or return null)",
     },
     "de-dollarization": {
         "name": "De-dollarization & Reserve Currency Shifts",
-        "keywords": ["de-dollarization", "brics currency", "gold reserve", "yuan internationalization", "reserve currency", "dollar decline"],
-        "description": "BRICS alternatives, gold reserves, yuan internationalization",
+        "keywords": [("de-dollarization", 2), ("brics currency", 2), ("gold reserve central bank", 2), ("yuan internationalization", 2), ("reserve currency shift", 2), ("dollar decline reserve", 2), ("brics payment", 2), ("dollar alternative", 2)],
+        "exclude_keywords": [],
+        "description": "BRICS currency alternatives, central bank gold accumulation, yuan internationalization",
+        "must_include": "RESERVE CURRENCY dynamics: de-dollarization moves, BRICS alternatives, central bank gold buying",
+        "must_exclude": "General dollar strength/weakness from Fed policy (use us-fed-rate-path)",
     },
     "china-taiwan-indo-pacific": {
         "name": "China-Taiwan Tensions & Indo-Pacific Security",
-        "keywords": ["taiwan", "china taiwan", "indo-pacific", "south china sea", "aukus", "taiwan strait", "taiwan semiconductor"],
-        "description": "Military posturing, semiconductor supply risk, alliance dynamics",
+        "keywords": [("taiwan strait", 2), ("china taiwan", 2), ("indo-pacific", 2), ("south china sea", 2), ("aukus", 2), ("taiwan military", 2), ("taiwan semiconductor risk", 2), ("china military taiwan", 2), ("pla", 1)],
+        "exclude_keywords": ["china gdp", "china property", "pboc", "china stimulus", "evergrande"],
+        "description": "China-Taiwan military tensions, South China Sea, AUKUS, semiconductor supply risk from conflict",
+        "must_include": "SECURITY/MILITARY tensions: Taiwan Strait, South China Sea, Indo-Pacific alliances, AUKUS",
+        "must_exclude": "China economic data (use china-economic-slowdown), PBOC policy (use china-pboc-stimulus)",
     },
     "mas-sgd-policy": {
         "name": "MAS Policy & SGD Management",
-        "keywords": ["monetary authority of singapore", "mas monetary policy", "mas policy", "sgd neer", "s$neer", "singapore dollar policy", "singapore exchange rate policy"],
-        "description": "Singapore monetary policy, S$NEER band adjustments, regional FX impact",
+        "keywords": [("monetary authority of singapore", 2), ("mas monetary policy", 2), ("mas policy", 2), ("sgd neer", 2), ("s$neer", 2), ("singapore dollar policy", 2), ("singapore exchange rate policy", 2), ("mas review", 2)],
+        "exclude_keywords": ["singapore startup", "singapore property price", "singapore tourism"],
+        "description": "MAS monetary policy decisions, S$NEER band adjustments, SGD management",
+        "must_include": "MAS POLICY decisions: S$NEER band changes, monetary policy statements, exchange rate management",
+        "must_exclude": "General Singapore economic data without MAS policy angle, Singapore business news",
     },
 }
 
@@ -129,10 +194,27 @@ def generate_slug(name):
     return slug.strip('-')
 
 
+def _score_keyword_match(text, theme_def):
+    """Score an article against a theme using weighted keywords and exclusions.
+
+    Returns a score (0 if excluded or no match). Higher = stronger match.
+    """
+    # Check exclusion keywords first
+    for ekw in theme_def.get("exclude_keywords", []):
+        if ekw in text:
+            return 0
+
+    score = 0
+    for kw, weight in theme_def["keywords"]:
+        if kw in text:
+            score += weight
+    return score
+
+
 def classify_article(article):
     """Classify an article into matching theme slugs.
 
-    Uses Claude Haiku first, falls back to keyword matching if Claude is unavailable.
+    Uses Claude Sonnet first, falls back to scored keyword matching if Claude is unavailable.
     Returns list of slug strings (0 or 1 items).
     """
     title = article.get("title", "")
@@ -147,14 +229,22 @@ def classify_article(article):
     except Exception as e:
         logger.warning(f"Claude classification failed, falling back to keywords: {e}")
 
-    # Keyword fallback
+    # Scored keyword fallback — requires minimum score of 4 (e.g., 2 strong keywords or 4 supporting)
     text = f"{title} {full_text}".lower()
-    matches = []
+    scored_matches = []
     for slug, theme in THEME_DEFINITIONS.items():
-        if any(kw in text for kw in theme["keywords"]):
-            matches.append(slug)
+        score = _score_keyword_match(text, theme)
+        if score >= 4:
+            scored_matches.append((slug, score))
 
-    return matches[:1] if matches else []
+    if not scored_matches:
+        return []
+
+    # Return the highest-scoring theme
+    scored_matches.sort(key=lambda x: x[1], reverse=True)
+    best_slug = scored_matches[0][0]
+    logger.info(f"Keyword fallback: '{title[:60]}' → {best_slug} (score={scored_matches[0][1]})")
+    return [best_slug]
 
 
 def cluster_articles():
