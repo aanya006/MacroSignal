@@ -31,4 +31,4 @@ except Exception as e:
 "
 
 # Start gunicorn
-exec gunicorn -b 0.0.0.0:5001 --workers 2 --timeout 120 wsgi:app
+exec gunicorn -b 0.0.0.0:5001 --workers 2 --timeout 600 wsgi:app

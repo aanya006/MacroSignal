@@ -155,51 +155,63 @@ def classify_article_with_claude(title, text):
     # Use up to 3000 chars for better context
     user_msg = f"Title: {title}\nText: {(text or '')[:3000]}"
 
-    try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=150,
-            messages=[
-                {"role": "user", "content": f"{prompt}\n\n{user_msg}"}
-            ],
-        )
-        if not response.content:
-            return None
-        raw = response.content[0].text.strip()
-
-        # Extract JSON object from response — Claude may wrap in code fences or add extra text
-        import re
-        json_match = re.search(r'\{[^}]*\}', raw)
-        if not json_match:
-            logger.warning(f"No JSON object found in Claude response: {raw[:100]}")
-            return None
-        raw = json_match.group()
-
-        # Parse JSON response
-        result = json.loads(raw)
-        slug = result.get("theme_slug")
-        confidence = result.get("confidence", 0.0)
-
-        if slug and confidence >= CONFIDENCE_THRESHOLD:
-            if slug not in valid_slugs:
-                logger.warning(f"Claude returned invalid slug '{slug}', ignoring")
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=150,
+                messages=[
+                    {"role": "user", "content": f"{prompt}\n\n{user_msg}"}
+                ],
+            )
+            if not response.content:
                 return None
-            logger.info(f"Classified '{title[:60]}' → {slug} (confidence={confidence})")
-            return slug
-        if slug:
-            logger.info(f"Rejected '{title[:60]}' → {slug} (confidence={confidence} < {CONFIDENCE_THRESHOLD})")
-        return None
+            raw = response.content[0].text.strip()
 
-    except anthropic.RateLimitError:
-        logger.warning("Claude API rate limit hit during classification, pausing 10s")
-        time.sleep(10)
-        return None
-    except anthropic.APITimeoutError:
-        logger.warning("Claude API timeout during classification")
-        return None
-    except (json.JSONDecodeError, KeyError, TypeError) as e:
-        logger.warning(f"Failed to parse Claude classification response: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Claude classification error: {e}")
-        return None
+            # Extract JSON object from response — Claude may wrap in code fences or add extra text
+            import re
+            json_match = re.search(r'\{[^}]*\}', raw)
+            if not json_match:
+                logger.warning(f"No JSON object found in Claude response: {raw[:100]}")
+                return None
+            raw = json_match.group()
+
+            # Parse JSON response
+            result = json.loads(raw)
+            slug = result.get("theme_slug")
+            confidence = result.get("confidence", 0.0)
+
+            if slug and confidence >= CONFIDENCE_THRESHOLD:
+                if slug not in valid_slugs:
+                    logger.warning(f"Claude returned invalid slug '{slug}', ignoring")
+                    return None
+                logger.info(f"Classified '{title[:60]}' → {slug} (confidence={confidence})")
+                return slug
+            if slug:
+                logger.info(f"Rejected '{title[:60]}' → {slug} (confidence={confidence} < {CONFIDENCE_THRESHOLD})")
+            return None
+
+        except anthropic.RateLimitError:
+            logger.warning("Claude API rate limit hit, pausing 10s")
+            time.sleep(10)
+        except anthropic.APITimeoutError:
+            logger.warning("Claude API timeout during classification")
+            return None
+        except anthropic.APIStatusError as e:
+            if e.status_code == 529:
+                wait = 5 * (attempt + 1)
+                logger.warning(f"Claude API overloaded (529), retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait)
+            else:
+                logger.error(f"Claude API error: {e}")
+                return None
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            logger.warning(f"Failed to parse Claude classification response: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Claude classification error: {e}")
+            return None
+
+    logger.warning(f"All {max_retries} retries exhausted for '{title[:60]}'")
+    return None
