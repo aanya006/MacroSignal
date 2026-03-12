@@ -439,6 +439,16 @@ def run_ingestion():
     filtered = [a for a in all_articles if is_relevant(a)]
     logger.info(f"Articles after keyword filter: {len(filtered)} (filtered out {total_fetched - len(filtered)})")
 
+    # Cap ingestion to limit API calls — prioritize known quality sources
+    MAX_ARTICLES_PER_CYCLE = 50
+    if len(filtered) > MAX_ARTICLES_PER_CYCLE:
+        priority_set = {s.lower() for s in PRIORITY_SOURCES}
+        priority = [a for a in filtered if a.get("source_name", "").lower() in priority_set or
+                    any(p in a.get("source_name", "").lower() for p in priority_set)]
+        non_priority = [a for a in filtered if a not in priority]
+        filtered = (priority + non_priority)[:MAX_ARTICLES_PER_CYCLE]
+        logger.info(f"Capped to {MAX_ARTICLES_PER_CYCLE} articles ({len(priority)} from priority sources)")
+
     # Scrape OG images for articles that have none (e.g. Google RSS)
     enrich_with_og_images(filtered)
 
