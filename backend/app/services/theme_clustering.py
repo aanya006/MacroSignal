@@ -3,10 +3,11 @@ import logging
 import math
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.models.db import execute_query, get_connection, release_connection
 from app.utils.cache import cache_set
+from app.utils.config import REFERENCE_DATE
 
 logger = logging.getLogger(__name__)
 
@@ -332,15 +333,17 @@ def calculate_temperatures():
     """
     # Use fixed reference date (last ingestion date) instead of real-time
     # to keep scores meaningful while news ingestion is paused.
-    now = datetime(2025, 3, 10, 23, 59, 59, tzinfo=timezone.utc)
+    now = datetime.fromisoformat(REFERENCE_DATE.replace('Z', '+00:00'))
+    cutoff = now - timedelta(days=7)
 
     # Single query for all recent articles across all themes
     articles = execute_query(
         """
         SELECT theme_id, published_at FROM articles
-        WHERE published_at >= TIMESTAMP '2025-03-03 23:59:59 UTC'
+        WHERE published_at >= %s
         AND theme_id IS NOT NULL
-        """
+        """,
+        (cutoff,)
     )
 
     # Total article counts per theme (all time, for article_count column)

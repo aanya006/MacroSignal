@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchMarketSignals } from '../api/client'
+import useThemeStore from '../store/useThemeStore'
 
 const SWIMLANES = [
   { key: 'Equities', label: 'Equities', color: 'border-blue-500', badge: 'bg-blue-500/20 text-blue-400' },
@@ -10,9 +11,10 @@ const SWIMLANES = [
   { key: 'Real Estate', label: 'Real Estate', color: 'border-teal-500', badge: 'bg-teal-500/20 text-teal-400' },
 ]
 
-function formatRelativeTime(dateStr) {
+function formatRelativeTime(dateStr, referenceNow) {
   if (!dateStr) return ''
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000)
+  const now = referenceNow || Date.now()
+  const diff = Math.floor((now - new Date(dateStr).getTime()) / 60000)
   if (diff < 1) return 'just now'
   if (diff < 60) return `${diff}m ago`
   if (diff < 1440) return `${Math.floor(diff / 60)}h ago`
@@ -20,6 +22,7 @@ function formatRelativeTime(dateStr) {
 }
 
 function MarketSignalsPanel({ fromDate = '', toDate = '', selectedAssetClasses = [] }) {
+  const referenceNow = useThemeStore((s) => s.reference_now)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -126,7 +129,7 @@ function MarketSignalsPanel({ fromDate = '', toDate = '', selectedAssetClasses =
                           <span className="inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400">↗</span>
                         </p>
                         <p className="text-xs text-slate-500 mt-1.5">
-                          <span className="font-medium text-slate-400">{article.source_name}</span> · {formatRelativeTime(article.published_at)}
+                          <span className="font-medium text-slate-400">{article.source_name}</span> · {formatRelativeTime(article.published_at, referenceNow)}
                         </p>
                       </div>
                     ))

@@ -220,6 +220,21 @@ The institutional memory layer creates a **data flywheel**: every month the syst
 
 ---
 
+## A Note on the Demo Data (March 10 Freeze)
+
+You'll notice the entire site behaves as if "today" is **10 March 2025**. This is intentional!
+
+Running a live news ingestion pipeline means calling the NewsAPI and Claude API on every cycle — and those API credits add up fast, especially during a hackathon where you're iterating constantly. After a week of active development we'd burned through enough credits to make us wince, so we made a pragmatic call: freeze the data at March 10 and stop the bleeding.
+
+Here's what that means in practice:
+- **News ingestion is paused** — the `INGESTION_ENABLED` env var is set to `false`, so no new articles are fetched.
+- **Temperature scoring is anchored to March 10** — the exponential decay formula uses a fixed reference date (`REFERENCE_DATE` env var) instead of the real current time, so theme scores stay meaningful and don't all decay to "cool".
+- **All relative timestamps in the UI** (e.g. "2h ago", "1d ago") are computed relative to March 10, not the actual current date. The frontend fetches this reference date from the backend's `/api/status` endpoint so there's a single source of truth.
+
+The system is fully capable of running live — just set `INGESTION_ENABLED=true`, remove (or update) the `REFERENCE_DATE` env var, and it'll resume real-time ingestion and scoring. We just didn't want to burn $50/day in API calls to prove a point.
+
+---
+
 ## Local Development Setup
 
 ### Prerequisites

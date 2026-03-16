@@ -1,13 +1,15 @@
 import { useState } from 'react'
+import useThemeStore from '../store/useThemeStore'
 
-function formatDateTime(dateStr) {
+function formatDateTime(dateStr, referenceNow) {
   if (!dateStr) return ''
+  const now = referenceNow || Date.now()
   const date = new Date(dateStr)
-  const now = new Date()
-  const isToday = date.toDateString() === now.toDateString()
+  const refDate = new Date(now)
+  const isToday = date.toDateString() === refDate.toDateString()
 
   if (isToday) {
-    const diffMs = now - date
+    const diffMs = now - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)
     if (diffMins < 1) return 'Just now'
     if (diffMins < 60) return `${diffMins}m ago`
@@ -70,6 +72,7 @@ function getSourceLogoUrl(sourceName, articleUrl) {
 }
 
 function ArticleCard({ article }) {
+  const referenceNow = useThemeStore((s) => s.reference_now)
   const [imgFailed, setImgFailed] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
 
@@ -112,7 +115,7 @@ function ArticleCard({ article }) {
         <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
           <span className="font-medium text-slate-400">{article.source_name}</span>
           <span aria-hidden="true">·</span>
-          <time dateTime={article.published_at}>{formatDateTime(article.published_at)}</time>
+          <time dateTime={article.published_at}>{formatDateTime(article.published_at, referenceNow)}</time>
         </div>
         {article.ai_summary && (
           <p className="mt-1 text-xs text-slate-400 leading-relaxed line-clamp-2">

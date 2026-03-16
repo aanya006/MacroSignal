@@ -28,6 +28,8 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - NEWS_API_KEY=${NEWS_API_KEY}
       - FLASK_ENV=production
+    ports:
+      - "5001:5001"      
     depends_on:
       postgres:
         condition: service_healthy

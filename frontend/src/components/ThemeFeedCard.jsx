@@ -1,4 +1,5 @@
 import TemperatureBadge from './TemperatureBadge'
+import useThemeStore from '../store/useThemeStore'
 
 const BORDER_HEX = {
   hot: '#ef4444',
@@ -6,9 +7,10 @@ const BORDER_HEX = {
   cool: '#06b6d4',
 }
 
-function formatRecency(lastUpdated) {
+function formatRecency(lastUpdated, referenceNow) {
   if (!lastUpdated) return ''
-  const diff = Date.now() - new Date(lastUpdated).getTime()
+  const now = referenceNow || Date.now()
+  const diff = now - new Date(lastUpdated).getTime()
   const minutes = Math.floor(diff / 60000)
   if (minutes < 1) return 'Just now'
   if (minutes < 60) return `${minutes}m ago`
@@ -19,6 +21,7 @@ function formatRecency(lastUpdated) {
 }
 
 function ThemeFeedCard({ theme, isSelected, onSelect, onKeyDown }) {
+  const referenceNow = useThemeStore((s) => s.reference_now)
   const label = theme.score_label ? theme.score_label.toLowerCase() : 'cool'
   const borderColor = isSelected
     ? BORDER_HEX[label] || '#06b6d4'
@@ -46,7 +49,7 @@ function ThemeFeedCard({ theme, isSelected, onSelect, onKeyDown }) {
         {theme.last_updated_at && (
           <>
             <span aria-hidden="true">·</span>
-            <span>{formatRecency(theme.last_updated_at)}</span>
+            <span>{formatRecency(theme.last_updated_at, referenceNow)}</span>
           </>
         )}
       </div>

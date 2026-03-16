@@ -5,13 +5,6 @@ import ThemeFeed from '../components/ThemeFeed'
 import ThemeDetailPanel from '../components/ThemeDetailPanel'
 import MemoryDetailPanel from '../components/MemoryDetailPanel'
 import MarketSignalsPanel from '../components/MarketSignalsPanel'
-function formatTimeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000)
-  if (diff < 1) return 'just now'
-  if (diff < 60) return `${diff} min ago`
-  const hrs = Math.floor(diff / 60)
-  return `${hrs}h ago`
-}
 
 function DashboardPage() {
   const {
@@ -19,7 +12,7 @@ function DashboardPage() {
     selected_theme,
     loading,
     error,
-    last_updated,
+    reference_now,
     load_themes,
     load_status,
     set_selected_theme,
@@ -75,9 +68,9 @@ function DashboardPage() {
             MacroSignal
           </h1>
         </Link>
-        <div className="flex items-center gap-1.5 text-xs text-green-500">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          Live · Updated {last_updated ? formatTimeAgo(last_updated) : '--'}
+          <span>Last updated {reference_now ? new Date(reference_now).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '--'}</span>
         </div>
       </header>
 

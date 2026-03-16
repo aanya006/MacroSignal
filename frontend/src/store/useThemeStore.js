@@ -7,6 +7,7 @@ const useThemeStore = create((set, get) => ({
   loading: false,
   error: null,
   last_updated: null,
+  reference_now: null,
 
   set_themes: (themes) => set({ themes }),
   set_selected_theme: (theme) => set({ selected_theme: theme }),
@@ -32,8 +33,12 @@ const useThemeStore = create((set, get) => ({
       const res = await fetchStatus()
       const lastUpdated =
         res.data?.data?.last_ingestion || res.data?.meta?.last_updated || null
-      if (lastUpdated) {
-        set({ last_updated: lastUpdated })
+      const referenceNow = res.data?.data?.reference_now || null
+      if (lastUpdated || referenceNow) {
+        set({
+          ...(lastUpdated && { last_updated: lastUpdated }),
+          ...(referenceNow && { reference_now: new Date(referenceNow).getTime() }),
+        })
       }
     } catch {
       // status endpoint failure is non-critical

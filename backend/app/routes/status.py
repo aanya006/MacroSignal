@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify
+from app.utils.config import REFERENCE_DATE
 
 status_bp = Blueprint('status', __name__)
 
@@ -29,6 +30,7 @@ def get_status():
                 "article_count": article_count,
                 "theme_count": theme_count,
                 "last_ingestion": last_ingestion,
+                "reference_now": REFERENCE_DATE,
             },
             "meta": {
                 "last_updated": datetime.now(timezone.utc).isoformat()
