@@ -8,6 +8,12 @@ MacroSignal does.
 
 ---
 
+> **Demo note:** The live site is frozen to **10 March 2026**. The news ingestion pipeline pulls from NewsAPI and classifies articles using Claude — which costs real money on every cycle. After a week of active development and iteration, the API bill was getting a bit too real for a hackathon project, so we froze the data and called it a day. Everything you see on the site — theme scores, article timelines, causal chains — reflects the state of the world as of that date.
+>
+> The system is fully capable of running live. Set `INGESTION_ENABLED=true`, remove the `REFERENCE_DATE` env var, and it resumes real-time ingestion and scoring. The freeze is purely a cost decision, not a technical limitation.
+
+---
+
 ## Architecture Overview
 
 This README covers the technical implementation — architecture, API reference, deployment, and scaling strategy. For a concise product summary, see [PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md).
@@ -220,21 +226,6 @@ The institutional memory layer creates a **data flywheel**: every month the syst
 
 ---
 
-## A Note on the Demo Data (March 10 Freeze)
-
-You'll notice the entire site behaves as if "today" is **10 March 2025**. This is intentional!
-
-Running a live news ingestion pipeline means calling the NewsAPI and Claude API on every cycle — and those API credits add up fast, especially during a hackathon where you're iterating constantly. After a week of active development we'd burned through enough credits to make us wince, so we made a pragmatic call: freeze the data at March 10 and stop the bleeding.
-
-Here's what that means in practice:
-- **News ingestion is paused** — the `INGESTION_ENABLED` env var is set to `false`, so no new articles are fetched.
-- **Temperature scoring is anchored to March 10** — the exponential decay formula uses a fixed reference date (`REFERENCE_DATE` env var) instead of the real current time, so theme scores stay meaningful and don't all decay to "cool".
-- **All relative timestamps in the UI** (e.g. "2h ago", "1d ago") are computed relative to March 10, not the actual current date. The frontend fetches this reference date from the backend's `/api/status` endpoint so there's a single source of truth.
-
-The system is fully capable of running live — just set `INGESTION_ENABLED=true`, remove (or update) the `REFERENCE_DATE` env var, and it'll resume real-time ingestion and scoring. We just didn't want to burn $50/day in API calls to prove a point.
-
----
-
 ## Local Development Setup
 
 ### Prerequisites
@@ -254,19 +245,20 @@ cp .env.example .env
 # Start all services
 docker compose up --build
 
-# App is available at http://localhost:3000
-# API is available at http://localhost:5000
+# App is available at http://localhost
+# API is available at http://localhost:5001
 ```
 
 ### Environment Variables
-```
-ANTHROPIC_API_KEY=your_anthropic_key
-NEWS_API_KEY=your_newsapi_key
-POSTGRES_DB=macrosignal
-POSTGRES_USER=macrosignal
-POSTGRES_PASSWORD=your_password
-REDIS_URL=redis://redis:6379/0
-```
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `ANTHROPIC_API_KEY` | Yes | — | Claude API key for article classification and causal chains |
+| `NEWS_API_KEY` | Yes | — | NewsAPI key for article ingestion |
+| `DATABASE_URL` | No | `postgresql://postgres:postgres@localhost:5432/macrosignal` | PostgreSQL connection string |
+| `REDIS_URL` | No | `redis://localhost:6379/0` | Redis connection string |
+| `INGESTION_ENABLED` | No | `false` | Set to `true` to enable live news ingestion |
+| `REFERENCE_DATE` | No | `2026-03-10T23:59:59Z` | Anchor date for temperature scoring and UI timestamps. Remove to use real-time. |
+| `VITE_API_URL` | No | `/api` | Frontend API base URL (baked at build time) |
 
 ---
 
