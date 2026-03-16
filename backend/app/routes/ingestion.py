@@ -7,6 +7,9 @@ ingestion_bp = Blueprint('ingestion', __name__)
 @ingestion_bp.route('/api/ingest', methods=['POST'])
 def trigger_ingestion():
     """Manual trigger for news ingestion (dev/testing only)."""
+    from app.utils.config import INGESTION_ENABLED
+    if not INGESTION_ENABLED:
+        return jsonify({"error": True, "message": "Ingestion is disabled. Set INGESTION_ENABLED=true to enable.", "code": "INGESTION_DISABLED"}), 403
     try:
         from app.services.news_ingestion import run_ingestion
         result = run_ingestion()

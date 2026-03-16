@@ -31,6 +31,12 @@ def run_scheduled_ingestion():
 
 def init_scheduler(app):
     """Initialize APScheduler with twice-daily ingestion cycle (every 12 hours)."""
+    from app.utils.config import INGESTION_ENABLED
+
+    if not INGESTION_ENABLED:
+        logger.info("Scheduler skipped: INGESTION_ENABLED is false")
+        return
+
     global _scheduler
     if _scheduler is not None:
         return
