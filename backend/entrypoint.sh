@@ -30,5 +30,13 @@ except Exception as e:
     print(f'Seed check error: {e}')
 "
 
+# Recalculate temperature scores on startup
+python -c "
+from app.services.theme_clustering import calculate_temperatures, cache_themes
+calculate_temperatures()
+cache_themes()
+print('Temperature scores recalculated')
+"
+
 # Start gunicorn
 exec gunicorn -b 0.0.0.0:5001 --workers 2 --timeout 600 wsgi:app

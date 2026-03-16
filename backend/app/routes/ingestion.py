@@ -51,6 +51,21 @@ def backfill_images():
         return jsonify({"error": True, "message": str(e), "code": "BACKFILL_ERROR"}), 500
 
 
+@ingestion_bp.route('/api/admin/recalc-temperatures', methods=['POST'])
+def recalc_temperatures():
+    """Recalculate temperature scores without ingestion or reclassification."""
+    try:
+        from app.services.theme_clustering import calculate_temperatures, cache_themes
+        calculate_temperatures()
+        themes = cache_themes()
+        return jsonify({
+            "data": {"themes_updated": len(themes)},
+            "meta": {"last_updated": datetime.now(timezone.utc).isoformat()}
+        })
+    except Exception as e:
+        return jsonify({"error": True, "message": str(e), "code": "RECALC_ERROR"}), 500
+
+
 @ingestion_bp.route('/api/admin/reclassify/<slug>', methods=['POST'])
 def trigger_reclassify_theme(slug):
     """Reclassify only articles under a specific theme.
