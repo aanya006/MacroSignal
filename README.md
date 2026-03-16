@@ -250,15 +250,15 @@ docker compose up --build
 ```
 
 ### Environment Variables
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `ANTHROPIC_API_KEY` | Yes | — | Claude API key for article classification and causal chains |
-| `NEWS_API_KEY` | Yes | — | NewsAPI key for article ingestion |
-| `DATABASE_URL` | No | `postgresql://postgres:postgres@localhost:5432/macrosignal` | PostgreSQL connection string |
-| `REDIS_URL` | No | `redis://localhost:6379/0` | Redis connection string |
-| `INGESTION_ENABLED` | No | `false` | Set to `true` to enable live news ingestion |
-| `REFERENCE_DATE` | No | `2026-03-10T23:59:59Z` | Anchor date for temperature scoring and UI timestamps. Remove to use real-time. |
-| `VITE_API_URL` | No | `/api` | Frontend API base URL (baked at build time) |
+```
+ANTHROPIC_API_KEY=         # (required) Claude API key
+NEWS_API_KEY=              # (required) NewsAPI key
+DATABASE_URL=              # default: postgresql://postgres:postgres@localhost:5432/macrosignal
+REDIS_URL=                 # default: redis://localhost:6379/0
+INGESTION_ENABLED=false    # set to true to enable live news ingestion
+REFERENCE_DATE=            # default: 2026-03-10T23:59:59Z — anchor for scoring & UI timestamps
+VITE_API_URL=/api          # frontend API base URL (baked at build time)
+```
 
 ---
 
